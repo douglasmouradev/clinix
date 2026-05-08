@@ -1,0 +1,5 @@
+.env
+storage/cache/*
+storage/logs/*
+public/uploads/*
+acessos
