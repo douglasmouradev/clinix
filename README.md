@@ -1,6 +1,38 @@
-# Clinix - SaaS para Clínica Medica (PHP + MySQL)
+<p align="center">
+  <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP"/>
+  <img src="https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL"/>
+  <img src="https://img.shields.io/badge/SaaS-Multi--tenant-0ea5e9?style=flat-square" alt="SaaS"/>
+  <img src="https://img.shields.io/badge/LGPD-Compliance-22c55e?style=flat-square" alt="LGPD"/>
+</p>
+
+<h1 align="center">Clinix</h1>
+
+<p align="center">
+  <strong>SaaS multi-tenant para clínicas médicas</strong> — fila de atendimento, prontuário, triagem, agenda, billing e conformidade LGPD.
+</p>
+
+<p align="center">
+  <a href="https://portifolio-douglas-moura.vercel.app">Portfólio</a> ·
+  <a href="https://github.com/douglasmouradev">GitHub</a> ·
+  <a href="https://wa.me/5571997087082?text=Ol%C3%A1%20Douglas%2C%20tenho%20interesse%20no%20Clinix.">Solicitar implantação</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/douglasmouradev/clinix/ci.yml?branch=main&label=CI&style=flat-square" alt="CI"/>
+</p>
+
+---
+
+# Clinix — SaaS para clínicas médicas (PHP + MySQL)
 
 Sistema SaaS para clínicas de pequeno e médio porte, com autenticação por sessão, controle de acesso por perfil e prontuário eletrônico compartilhado.
+
+## Destaques
+
+- Perfis: **admin**, **recepção**, **enfermeira** e **médico**
+- Fila com painel público para TV e prontuário com histórico exportável
+- **CSRF**, rate limit, auditoria, **2FA** e planos por tenant
+- **Stripe**, Docker e testes com PHPUnit
 
 ## Arquitetura
 
