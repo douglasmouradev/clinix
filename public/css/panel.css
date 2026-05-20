@@ -1,0 +1,81 @@
+.panel-display-card { max-width: 960px; margin: 0 auto; }
+.panel-content { min-height: 280px; }
+.panel-call-card {
+    border-radius: 20px;
+    padding: 32px 28px;
+    text-align: center;
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.panel-call-active {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 2px solid #93c5fd;
+    box-shadow: 0 20px 40px rgba(30, 58, 138, .15);
+}
+.panel-call-last {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 2px solid #86efac;
+    box-shadow: 0 12px 28px rgba(22, 101, 52, .12);
+}
+.panel-call-idle {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+}
+.panel-call-card.is-new { animation: panelPulse .6s ease; }
+@keyframes panelPulse {
+    0% { transform: scale(.96); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+.panel-call-label { margin: 0 0 8px; font-size: 18px; color: #475569; text-transform: uppercase; letter-spacing: .08em; }
+.panel-call-number { margin: 0; font-size: clamp(48px, 8vw, 84px); color: #1e3a8a; line-height: 1; }
+.panel-call-last .panel-call-number { color: #166534; }
+.panel-call-name { margin: 16px 0 8px; font-size: clamp(22px, 4vw, 32px); color: #0f172a; font-weight: 600; }
+.panel-call-room { margin: 0; font-size: clamp(18px, 3vw, 26px); color: #334155; }
+
+.panel-recent {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    text-align: left;
+}
+.panel-recent h3 {
+    font-size: 18px;
+    margin: 0 0 14px;
+    color: #0f172a;
+}
+.panel-recent-empty { margin: 0; font-size: 14px; }
+.panel-recent-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.panel-recent-item {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    grid-template-rows: auto auto;
+    gap: 2px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    align-items: center;
+}
+.panel-recent-number {
+    grid-row: 1 / 3;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e3a8a;
+}
+.panel-recent-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+}
+.panel-recent-meta {
+    font-size: 13px;
+    color: #64748b;
+}

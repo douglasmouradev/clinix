@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\DocumentStorage;
 use App\Core\View;
 use App\Models\Patient;
 use App\Models\Record;
@@ -13,7 +14,6 @@ final class RecordController
 {
     public function show(): void
     {
-        Auth::requireRole(['admin', 'nurse', 'doctor']);
         $patientId = (int) ($_GET['patient_id'] ?? 0);
         $patient = (new Patient())->find($patientId);
         if (!$patient) {
@@ -34,7 +34,6 @@ final class RecordController
 
     public function add(): void
     {
-        Auth::requireRole(['admin', 'nurse', 'doctor']);
         $patientId = (int) ($_POST['patient_id'] ?? 0);
         $content = trim($_POST['content'] ?? '');
         $entryType = $_POST['entry_type'] ?? '';
@@ -74,72 +73,54 @@ final class RecordController
         redirect('/?route=record.show&patient_id=' . $patientId);
     }
 
+    public function amend(): void
+    {
+        $recordId = (int) ($_POST['record_id'] ?? 0);
+        $patientId = (int) ($_POST['patient_id'] ?? 0);
+        $content = trim((string) ($_POST['content'] ?? ''));
+        $reason = trim((string) ($_POST['change_reason'] ?? ''));
+
+        if ($recordId > 0 && $content !== '' && $reason !== '') {
+            (new Record())->amendEntry($recordId, $content, $reason, (int) Auth::user()['id']);
+            auditLog('record.amend', 'Retificação do registro ID ' . $recordId);
+            flash('success', 'Registro retificado com versionamento.');
+        } else {
+            flash('error', 'Informe conteúdo e motivo da retificação.');
+        }
+
+        redirect('/?route=record.show&patient_id=' . $patientId);
+    }
+
     private function handleDocumentUpload(Record $recordModel, int $recordId): void
     {
-        if (!isset($_FILES['document']) || (int) ($_FILES['document']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        if (!isset($_FILES['document'])) {
             return;
         }
 
-        $file = $_FILES['document'];
-        if ((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            flash('error', 'Falha ao anexar documento.');
+        $stored = DocumentStorage::storeUploaded($_FILES['document'], 'records');
+        if ($stored === null) {
+            flash('error', 'Falha ao anexar documento (formato ou tamanho inválido).');
             return;
         }
 
-        $tmpName = (string) ($file['tmp_name'] ?? '');
-        $originalName = (string) ($file['name'] ?? '');
-        $fileSize = (int) ($file['size'] ?? 0);
-        $mimeType = (string) mime_content_type($tmpName);
-
-        $allowedMime = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ];
-
-        if (!in_array($mimeType, $allowedMime, true)) {
-            flash('error', 'Formato de arquivo não permitido. Use PDF, JPG, PNG, DOC ou DOCX.');
-            return;
-        }
-
-        if ($fileSize > 5 * 1024 * 1024) {
-            flash('error', 'Arquivo excede o limite de 5MB.');
-            return;
-        }
-
-        $uploadDir = __DIR__ . '/../../public/uploads/records/' . tenantId();
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-            flash('error', 'Não foi possivel criar diretorio de anexos.');
-            return;
-        }
-
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $safeName = bin2hex(random_bytes(16)) . ($extension !== '' ? '.' . strtolower($extension) : '');
-        $targetPath = $uploadDir . '/' . $safeName;
-
-        if (!move_uploaded_file($tmpName, $targetPath)) {
-            flash('error', 'Falha ao salvar o documento anexado.');
-            return;
-        }
-
-        $publicPath = 'uploads/records/' . tenantId() . '/' . $safeName;
-        $recordModel->addDocument($recordId, $originalName, $safeName, $publicPath, $mimeType, $fileSize);
+        $recordModel->addDocument(
+            $recordId,
+            $stored['original_name'],
+            $stored['stored_name'],
+            $stored['file_path'],
+            $stored['mime_type'],
+            $stored['file_size']
+        );
     }
 
     public function deleteDocument(): void
     {
-        Auth::requireRole(['admin', 'nurse', 'doctor']);
         $documentId = (int) ($_POST['document_id'] ?? 0);
         $patientId = (int) ($_POST['patient_id'] ?? 0);
         if ($documentId > 0 && $patientId > 0) {
             $doc = (new Record())->deleteDocument($documentId);
             if ($doc) {
-                $path = __DIR__ . '/../../public/' . ltrim((string) $doc['file_path'], '/');
-                if (is_file($path)) {
-                    @unlink($path);
-                }
+                DocumentStorage::delete((string) $doc['file_path']);
                 auditLog('record.document.delete', 'Anexo ' . $documentId . ' removido');
                 flash('success', 'Anexo removido com sucesso.');
             }
@@ -147,4 +128,3 @@ final class RecordController
         redirect('/?route=record.show&patient_id=' . $patientId);
     }
 }
-

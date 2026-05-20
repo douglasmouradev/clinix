@@ -114,5 +114,65 @@ final class Record
 
         return $doc;
     }
+
+    public function findEntry(int $recordId): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM patient_records WHERE id = :id AND tenant_id = :tenant_id LIMIT 1'
+        );
+        $stmt->execute(['id' => $recordId, 'tenant_id' => tenantId()]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function amendEntry(int $recordId, string $content, string $reason, int $changedBy): void
+    {
+        $entry = $this->findEntry($recordId);
+        if (!$entry) {
+            return;
+        }
+
+        $conn = Database::connection();
+        $versionStmt = $conn->prepare(
+            'SELECT COALESCE(MAX(version_no), 0) + 1 FROM patient_record_versions WHERE record_id = :record_id AND tenant_id = :tenant_id'
+        );
+        $versionStmt->execute(['record_id' => $recordId, 'tenant_id' => tenantId()]);
+        $versionNo = (int) $versionStmt->fetchColumn();
+
+        $insert = $conn->prepare(
+            'INSERT INTO patient_record_versions (tenant_id, record_id, patient_id, professional_id, entry_type, content, structured_data, version_no, change_reason, changed_by)
+             VALUES (:tenant_id, :record_id, :patient_id, :professional_id, :entry_type, :content, :structured_data, :version_no, :change_reason, :changed_by)'
+        );
+        $insert->execute([
+            'tenant_id' => tenantId(),
+            'record_id' => $recordId,
+            'patient_id' => (int) $entry['patient_id'],
+            'professional_id' => (int) $entry['professional_id'],
+            'entry_type' => (string) $entry['entry_type'],
+            'content' => (string) $entry['content'],
+            'structured_data' => $entry['structured_data'],
+            'version_no' => $versionNo,
+            'change_reason' => $reason,
+            'changed_by' => $changedBy,
+        ]);
+
+        $update = $conn->prepare(
+            'UPDATE patient_records SET content = :content WHERE id = :id AND tenant_id = :tenant_id'
+        );
+        $update->execute(['content' => $content, 'id' => $recordId, 'tenant_id' => tenantId()]);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function versions(int $recordId): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT v.*, u.name AS changed_by_name FROM patient_record_versions v
+             INNER JOIN users u ON u.id = v.changed_by
+             WHERE v.record_id = :record_id AND v.tenant_id = :tenant_id
+             ORDER BY v.version_no DESC'
+        );
+        $stmt->execute(['record_id' => $recordId, 'tenant_id' => tenantId()]);
+        return $stmt->fetchAll();
+    }
 }
 

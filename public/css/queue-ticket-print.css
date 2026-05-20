@@ -1,0 +1,78 @@
+* { box-sizing: border-box; }
+
+body.ticket-print-body {
+    margin: 0;
+    padding: 16px;
+    font-family: "Figtree", "Noto Sans", system-ui, sans-serif;
+    background: #fff;
+    color: #0f172a;
+}
+
+.ticket-slip {
+    width: 80mm;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 14px 12px;
+    border: 2px dashed #334155;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.ticket-clinic {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ticket-label {
+    margin: 0;
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.ticket-number {
+    margin: 8px 0 10px;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+    color: #1e3a8a;
+}
+
+.ticket-patient {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ticket-room,
+.ticket-date {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #475569;
+}
+
+.ticket-hint {
+    margin: 12px 0 0;
+    font-size: 11px;
+    color: #64748b;
+}
+
+@media print {
+    body.ticket-print-body {
+        padding: 0;
+    }
+
+    .ticket-slip {
+        border: none;
+        width: 80mm;
+    }
+
+    @page {
+        size: 80mm auto;
+        margin: 4mm;
+    }
+}

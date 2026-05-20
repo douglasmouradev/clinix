@@ -36,72 +36,16 @@ session_set_cookie_params([
 ]);
 session_start();
 
-$route = $_GET['route'] ?? 'dashboard';
-if ($route !== 'queue.panel') {
+$route = (string) ($_GET['route'] ?? 'dashboard');
+$httpMethod = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+if (!in_array($route, \App\Core\Router::publicRoutes(), true)) {
     \App\Core\Auth::enforceSessionSecurity();
 }
 
-$routes = [
-    'login' => [App\Controllers\AuthController::class, 'loginForm', ['GET']],
-    'login.submit' => [App\Controllers\AuthController::class, 'login', ['POST']],
-    'onboarding' => [App\Controllers\OnboardingController::class, 'form', ['GET']],
-    'onboarding.submit' => [App\Controllers\OnboardingController::class, 'submit', ['POST']],
-    'logout' => [App\Controllers\AuthController::class, 'logout', ['POST']],
-    'dashboard' => [App\Controllers\DashboardController::class, 'index', ['GET']],
-    'billing' => [App\Controllers\BillingController::class, 'index', ['GET']],
-    'billing.plan.change' => [App\Controllers\BillingController::class, 'changePlan', ['POST']],
-    'compliance' => [App\Controllers\ComplianceController::class, 'index', ['GET']],
-    'compliance.policy.save' => [App\Controllers\ComplianceController::class, 'savePolicy', ['POST']],
-    'compliance.retention.run' => [App\Controllers\ComplianceController::class, 'runRetention', ['POST']],
-    'appointments' => [App\Controllers\AppointmentController::class, 'index', ['GET']],
-    'appointment.form' => [App\Controllers\AppointmentController::class, 'form', ['GET']],
-    'appointment.save' => [App\Controllers\AppointmentController::class, 'save', ['POST']],
-    'appointment.status' => [App\Controllers\AppointmentController::class, 'updateStatus', ['POST']],
-    'admin.users' => [App\Controllers\AdminController::class, 'users', ['GET']],
-    'admin.user.form' => [App\Controllers\AdminController::class, 'userForm', ['GET']],
-    'admin.user.save' => [App\Controllers\AdminController::class, 'userSave', ['POST']],
-    'admin.panel' => [App\Controllers\AdminController::class, 'panelSettings', ['GET']],
-    'admin.panel.rotate' => [App\Controllers\AdminController::class, 'rotatePanelToken', ['POST']],
-    'admin.clinic' => [App\Controllers\AdminController::class, 'clinicSlug', ['GET']],
-    'admin.clinic.save' => [App\Controllers\AdminController::class, 'clinicSlugSave', ['POST']],
-    'patients' => [App\Controllers\PatientController::class, 'index', ['GET']],
-    'patient.form' => [App\Controllers\PatientController::class, 'form', ['GET']],
-    'patient.save' => [App\Controllers\PatientController::class, 'save', ['POST']],
-    'patient.document.delete' => [App\Controllers\PatientController::class, 'deleteDocument', ['POST']],
-    'patient.history' => [App\Controllers\PatientController::class, 'history', ['GET']],
-    'patient.history.report' => [App\Controllers\PatientController::class, 'historyReport', ['GET']],
-    'patient.lgpd.export' => [App\Controllers\PatientController::class, 'exportLgpd', ['GET']],
-    'patient.lgpd.anonymize' => [App\Controllers\PatientController::class, 'anonymizeLgpd', ['POST']],
-    'reports.executive' => [App\Controllers\ReportsController::class, 'executive', ['GET']],
-    'reports.executive.csv' => [App\Controllers\ReportsController::class, 'executiveCsv', ['GET']],
-    'queue' => [App\Controllers\QueueController::class, 'index', ['GET']],
-    'queue.generate' => [App\Controllers\QueueController::class, 'generate', ['POST']],
-    'queue.call' => [App\Controllers\QueueController::class, 'call', ['POST']],
-    'queue.done' => [App\Controllers\QueueController::class, 'done', ['POST']],
-    'queue.panel' => [App\Controllers\QueueController::class, 'panel', ['GET']],
-    'record.show' => [App\Controllers\RecordController::class, 'show', ['GET']],
-    'record.add' => [App\Controllers\RecordController::class, 'add', ['POST']],
-    'record.document.delete' => [App\Controllers\RecordController::class, 'deleteDocument', ['POST']],
-];
-
-if (!isset($routes[$route])) {
-    http_response_code(404);
-    echo 'Rota não encontrada.';
-    exit;
-}
-
-[$controllerClass, $method, $allowedMethods] = $routes[$route];
-
-if (!in_array($_SERVER['REQUEST_METHOD'], $allowedMethods, true)) {
-    http_response_code(405);
-    echo 'Metodo não permitido.';
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$csrfExempt = ['billing.webhook', 'cron.retention'];
+if ($httpMethod === 'POST' && !in_array($route, $csrfExempt, true)) {
     verifyCsrf();
 }
 
-$controller = new $controllerClass();
-$controller->$method();
-
+\App\Core\Router::dispatch($route, $httpMethod);

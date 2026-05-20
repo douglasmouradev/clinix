@@ -1,8 +1,10 @@
+<div id="queue-flash" class="queue-flash" hidden></div>
+
 <div class="grid grid-2">
     <?php if (in_array($role, ['admin', 'reception'], true)): ?>
         <div class="card">
             <h3>Gerar senha de atendimento</h3>
-            <form method="post" action="<?= APP_URL ?>/?route=queue.generate">
+            <form class="queue-ajax-form" method="post" action="<?= APP_URL ?>/?route=queue.generate" data-queue-action="generate">
                 <?= csrfInput() ?>
                 <label>Paciente</label>
                 <select name="patient_id" required>
@@ -11,10 +13,14 @@
                         <option value="<?= (int) $patient['id'] ?>"><?= e($patient['full_name']) ?></option>
                     <?php endforeach; ?>
                 </select>
-                <label style="margin-top:10px;">Sala prevista</label>
+                <label class="queue-field-label">Sala prevista</label>
                 <input name="room" placeholder="Ex.: Triagem 1 ou Consultorio 2">
-                <div style="margin-top:10px;">
-                    <button>Gerar senha</button>
+                <div class="queue-print-option">
+                    <input type="checkbox" id="queue-auto-print" checked>
+                    <label for="queue-auto-print">Imprimir senha automaticamente</label>
+                </div>
+                <div class="queue-form-actions">
+                    <button type="submit">Gerar senha</button>
                 </div>
             </form>
         </div>
@@ -23,19 +29,23 @@
     <?php if (in_array($role, ['admin', 'nurse', 'doctor'], true)): ?>
         <div class="card">
             <h3>Chamar paciente</h3>
-            <form method="post" action="<?= APP_URL ?>/?route=queue.call">
+            <form class="queue-ajax-form" method="post" action="<?= APP_URL ?>/?route=queue.call" data-queue-action="call">
                 <?= csrfInput() ?>
                 <label>Senha</label>
-                <select name="ticket_id" required>
+                <select name="ticket_id" required id="queue-call-select">
                     <option value="">Selecione</option>
                     <?php foreach ($queue as $ticket): ?>
-                        <option value="<?= (int) $ticket['id'] ?>">#<?= e($ticket['ticket_number']) ?> - <?= e($ticket['full_name']) ?></option>
+                        <?php if ($ticket['status'] === 'waiting'): ?>
+                            <option value="<?= (int) $ticket['id'] ?>" data-room="<?= e($ticket['room'] ?: ($role === 'nurse' ? 'Triagem 1' : 'Consultorio 1')) ?>">
+                                #<?= e($ticket['ticket_number']) ?> - <?= e($ticket['full_name']) ?>
+                            </option>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </select>
-                <label style="margin-top:10px;">Sala ou profissional</label>
-                <input name="room" value="<?= $role === 'nurse' ? 'Triagem 1' : 'Consultorio 1' ?>">
-                <div style="margin-top:10px;">
-                    <button>Chamar</button>
+                <label class="queue-field-label">Sala ou profissional</label>
+                <input name="room" id="queue-call-room" value="<?= $role === 'nurse' ? 'Triagem 1' : 'Consultorio 1' ?>">
+                <div class="queue-form-actions">
+                    <button type="submit">Chamar</button>
                 </div>
             </form>
         </div>
@@ -45,41 +55,84 @@
 <div class="card">
     <div class="card-title">
         <h3>Fila atual</h3>
-        <span class="pill"><?= count($queue) ?> na fila</span>
+        <span class="pill" id="queue-count-pill"><?= count($queue) ?> na fila</span>
     </div>
     <div class="table-wrap">
         <table>
             <thead>
             <tr><th>Senha</th><th>Paciente</th><th>Status</th><th>Destino</th><th>Ações</th></tr>
             </thead>
-            <tbody>
-            <?php foreach ($queue as $ticket): ?>
-                <tr>
-                    <td>#<?= e($ticket['ticket_number']) ?></td>
-                    <td><?= e($ticket['full_name']) ?></td>
-                    <td><?= e($ticket['status']) ?></td>
-                    <td><?= e($ticket['room'] ?? '-') ?></td>
-                    <td>
-                        <?php if (in_array($role, ['admin', 'reception', 'nurse', 'doctor'], true) && $ticket['status'] === 'waiting'): ?>
-                            <form method="post" action="<?= APP_URL ?>/?route=queue.call" style="margin-bottom:6px;">
-                                <?= csrfInput() ?>
-                                <input type="hidden" name="ticket_id" value="<?= (int) $ticket['id'] ?>">
-                                <input type="hidden" name="room" value="<?= e($ticket['room'] ?: ($role === 'reception' ? 'Recepção' : 'Triagem')) ?>">
-                                <button class="btn small" style="width:auto;">Chamar senha</button>
-                            </form>
-                        <?php endif; ?>
-                        <?php if (in_array($role, ['admin', 'nurse', 'doctor'], true) && $ticket['status'] === 'called'): ?>
-                            <form method="post" action="<?= APP_URL ?>/?route=queue.done">
-                                <?= csrfInput() ?>
-                                <input type="hidden" name="ticket_id" value="<?= (int) $ticket['id'] ?>">
-                                <button class="btn small" style="width:auto;">Finalizar</button>
-                            </form>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
+            <tbody id="queue-table-body">
+            <?php include __DIR__ . '/_table_rows.php'; ?>
             </tbody>
         </table>
     </div>
 </div>
 
+<style>
+    .queue-flash {
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    .queue-flash.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .queue-flash.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .queue-row-calling { opacity: .55; pointer-events: none; }
+    .queue-field-label { margin-top: 10px; }
+    .queue-print-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 10px 12px;
+        background: #f8fbfc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+    }
+    .queue-print-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+    .queue-print-option label {
+        display: inline;
+        margin: 0;
+        font-weight: 500;
+        line-height: 1.4;
+        cursor: pointer;
+    }
+    .queue-form-actions {
+        margin-top: 12px;
+    }
+    .queue-form-actions button {
+        width: 100%;
+    }
+    .queue-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+    .queue-actions .btn,
+    .queue-actions button {
+        width: auto;
+        margin: 0;
+    }
+    .grid.grid-2 > .card {
+        min-width: 0;
+    }
+</style>
+<script>
+    window.CLINIX_QUEUE = {
+        appUrl: <?= json_encode(APP_URL, JSON_UNESCAPED_UNICODE) ?>,
+        csrfToken: <?= json_encode($csrfToken ?? csrfToken(), JSON_UNESCAPED_UNICODE) ?>,
+        role: <?= json_encode($role, JSON_UNESCAPED_UNICODE) ?>,
+        clinicName: <?= json_encode($clinicName ?? APP_NAME, JSON_UNESCAPED_UNICODE) ?>,
+        canCall: <?= json_encode(in_array($role, ['admin', 'reception', 'nurse', 'doctor'], true)) ?>,
+        canDone: <?= json_encode(in_array($role, ['admin', 'nurse', 'doctor'], true)) ?>,
+        canPrint: <?= json_encode(in_array($role, ['admin', 'reception'], true)) ?>,
+        defaultRoom: <?= json_encode($role === 'reception' ? 'Recepção' : ($role === 'nurse' ? 'Triagem' : 'Triagem'), JSON_UNESCAPED_UNICODE) ?>
+    };
+</script>
+<script src="<?= APP_URL ?>/js/queue-manage.js?v=2"></script>

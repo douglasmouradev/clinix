@@ -8,7 +8,7 @@ use App\Core\Database;
 
 final class Queue
 {
-    public function generateToken(int $patientId, int $createdBy, ?string $room = null): void
+    public function generateToken(int $patientId, int $createdBy, ?string $room = null): ?array
     {
         $conn = Database::connection();
         $today = date('Y-m-d');
@@ -25,6 +25,21 @@ final class Queue
             'room' => $room,
             'created_by' => $createdBy,
         ]);
+
+        return $this->findTicket((int) $conn->lastInsertId());
+    }
+
+    public function findTicket(int $id): ?array
+    {
+        $sql = 'SELECT qt.*, p.full_name FROM queue_tickets qt
+                INNER JOIN patients p ON p.id = qt.patient_id
+                WHERE qt.id = :id AND qt.tenant_id = :tenant_id
+                LIMIT 1';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
+        $row = $stmt->fetch();
+
+        return $row ?: null;
     }
 
     public function waiting(): array
@@ -56,6 +71,81 @@ final class Queue
         $sql = 'UPDATE queue_tickets SET status = "done" WHERE id = :id AND tenant_id = :tenant_id';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['id' => $ticketId, 'tenant_id' => tenantId()]);
+    }
+
+    public function currentCalled(): ?array
+    {
+        $sql = 'SELECT qt.*, p.full_name FROM queue_tickets qt
+                INNER JOIN patients p ON p.id = qt.patient_id
+                WHERE qt.status = "called"
+                  AND qt.tenant_id = :tenant_id
+                  AND DATE(qt.called_at) = CURDATE()
+                ORDER BY qt.called_at DESC
+                LIMIT 1';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId()]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function waitingCount(): int
+    {
+        $sql = 'SELECT COUNT(*) FROM queue_tickets
+                WHERE status = "waiting" AND tenant_id = :tenant_id AND DATE(created_at) = CURDATE()';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId()]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function ticketsForManage(): array
+    {
+        return $this->waiting();
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function recentCalls(int $limit = 10): array
+    {
+        $sql = 'SELECT qt.id, qt.ticket_number, qt.room, qt.called_at, qt.status, p.full_name
+                FROM queue_tickets qt
+                INNER JOIN patients p ON p.id = qt.patient_id
+                WHERE qt.tenant_id = :tenant_id AND qt.status IN ("called", "done")
+                  AND qt.called_at IS NOT NULL AND DATE(qt.called_at) = CURDATE()
+                ORDER BY qt.called_at DESC
+                LIMIT ' . max(1, min(20, $limit));
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId()]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Dados do painel em poucas consultas (evita N+1 no polling).
+     *
+     * @return array{display: ?array, recent: list<array>, waiting_count: int}
+     */
+    public function panelSnapshot(int $recentLimit = 10): array
+    {
+        $recent = $this->recentCalls($recentLimit);
+        $display = null;
+
+        foreach ($recent as $row) {
+            if ((string) ($row['status'] ?? '') === 'called') {
+                $row['panel_live'] = true;
+                $display = $row;
+                break;
+            }
+        }
+
+        if ($display === null && $recent !== []) {
+            $display = $recent[0];
+            $display['panel_live'] = false;
+        }
+
+        return [
+            'display' => $display,
+            'recent' => $recent,
+            'waiting_count' => $this->waitingCount(),
+        ];
     }
 }
 

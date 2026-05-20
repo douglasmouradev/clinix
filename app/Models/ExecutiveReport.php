@@ -28,12 +28,21 @@ final class ExecutiveReport
         $activeUsersStmt = $conn->prepare('SELECT COUNT(*) FROM users WHERE tenant_id = :tenant_id AND is_active = 1');
         $activeUsersStmt->execute(['tenant_id' => $tenantId]);
 
+        $avgWaitStmt = $conn->prepare(
+            'SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, called_at)) FROM queue_tickets
+             WHERE tenant_id = :tenant_id AND status IN ("called", "done")
+               AND called_at IS NOT NULL AND DATE(created_at) BETWEEN :date_from AND :date_to'
+        );
+        $avgWaitStmt->execute(['tenant_id' => $tenantId, 'date_from' => $dateFrom, 'date_to' => $dateTo]);
+        $avgWait = $avgWaitStmt->fetchColumn();
+
         return [
             'active_patients' => (int) $patientsStmt->fetchColumn(),
             'appointments_total' => (int) $appointmentsStmt->fetchColumn(),
             'queue_total' => (int) $queueStmt->fetchColumn(),
             'records_total' => (int) $recordsStmt->fetchColumn(),
             'active_users' => (int) $activeUsersStmt->fetchColumn(),
+            'queue_avg_wait_minutes' => $avgWait !== null ? round((float) $avgWait, 1) : 0.0,
         ];
     }
 

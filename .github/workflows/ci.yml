@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: clinix
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+
+      - name: Configure environment
+        run: |
+          cp .env.example .env
+          {
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_USER=root"
+            echo "DB_PASS=root"
+            echo "CRON_SECRET=ci-cron-secret"
+          } >> .env
+
+      - name: Import schema and migrate
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot clinix < database/schema.sql
+          php database/migrate.php
+
+      - name: Quality check
+        run: ./scripts/quality-check.sh
+
+      - name: PHPUnit
+        run: |
+          composer install --no-interaction --prefer-dist
+          ./vendor/bin/phpunit
+
+      - name: Smoke test
+        run: |
+          php -S 127.0.0.1:8000 -t public public/router.php &
+          sleep 2
+          ./scripts/smoke-test.sh http://127.0.0.1:8000

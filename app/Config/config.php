@@ -42,4 +42,13 @@ define('PANEL_ACCESS_TOKEN', envValue('PANEL_ACCESS_TOKEN', 'clinix-painel-2026'
 define('DEFAULT_TENANT_ID', (int) envValue('DEFAULT_TENANT_ID', '1'));
 define('LGPD_TERM_VERSION', envValue('LGPD_TERM_VERSION', 'v1.0'));
 define('LGPD_RETENTION_DAYS_DEFAULT', (int) envValue('LGPD_RETENTION_DAYS_DEFAULT', '1825'));
+define('STRIPE_SECRET_KEY', envValue('STRIPE_SECRET_KEY', ''));
+define('STRIPE_WEBHOOK_SECRET', envValue('STRIPE_WEBHOOK_SECRET', ''));
+define('CRON_SECRET', envValue('CRON_SECRET', ''));
+define('APP_ENV', envValue('APP_ENV', 'local'));
+define('MAIL_FROM', envValue('MAIL_FROM', 'noreply@clinix.local'));
+define('SMTP_HOST', envValue('SMTP_HOST', ''));
+define('SMTP_PORT', (int) envValue('SMTP_PORT', '587'));
+define('SMTP_USER', envValue('SMTP_USER', ''));
+define('SMTP_PASS', envValue('SMTP_PASS', ''));
 

@@ -68,7 +68,7 @@
                     <strong>Anexos:</strong>
                     <?php foreach ($recordDocs as $doc): ?>
                         <div class="actions">
-                            <a class="link" target="_blank" href="<?= APP_URL . '/' . e($doc['file_path']) ?>"><?= e($doc['original_name']) ?></a>
+                            <a class="link" href="<?= APP_URL ?>/?route=record.document&id=<?= (int) $doc['id'] ?>"><?= e($doc['original_name']) ?></a>
                             <small class="muted"><?= e(formatDateTimeBr($doc['created_at'])) ?> (<?= e(number_format(((int) $doc['file_size']) / 1024, 1, ',', '.')) ?> KB)</small>
                             <form method="post" action="<?= APP_URL ?>/?route=record.document.delete">
                                 <?= csrfInput() ?>
@@ -81,6 +81,17 @@
                 </div>
             <?php endif; ?>
             <small class="muted"><?= e($item['professional_name']) ?> (<?= e(roleLabel($item['role'])) ?>) - <?= e(formatDateTimeBr($item['created_at'])) ?></small>
+            <?php if (in_array($role, ['admin', 'doctor'], true)): ?>
+                <form method="post" action="<?= APP_URL ?>/?route=record.amend" style="margin-top:10px;">
+                    <?= csrfInput() ?>
+                    <input type="hidden" name="record_id" value="<?= (int) $item['id'] ?>">
+                    <input type="hidden" name="patient_id" value="<?= (int) $patient['id'] ?>">
+                    <label>Retificar registro (gera versão no histórico)</label>
+                    <textarea name="content" required><?= e($item['content']) ?></textarea>
+                    <input name="change_reason" placeholder="Motivo da retificação" required style="margin-top:8px;">
+                    <button class="btn small" style="width:auto;margin-top:8px;">Salvar retificação</button>
+                </form>
+            <?php endif; ?>
         </div>
     <?php endforeach; ?>
     <?php if (empty($timeline)): ?>

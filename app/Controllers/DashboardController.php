@@ -6,13 +6,14 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\View;
+use App\Models\DashboardStats;
 
 final class DashboardController
 {
     public function index(): void
     {
-        Auth::requireLogin();
-        View::render('dashboard/index', ['user' => Auth::user()]);
+        $user = Auth::user();
+        $stats = (new DashboardStats())->forRole((string) ($user['role'] ?? ''));
+        View::render('dashboard/index', ['user' => $user, 'stats' => $stats]);
     }
 }
-

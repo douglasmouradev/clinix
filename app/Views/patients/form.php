@@ -18,7 +18,8 @@
             </div>
             <div>
                 <label>CPF (somente numeros)</label>
-                <input name="cpf" required maxlength="11" value="<?= e($patient['cpf'] ?? '') ?>">
+                <input name="cpf" id="cpf-input" required maxlength="14" value="<?= e(\App\Core\CpfValidator::format((string) ($patient['cpf'] ?? ''))) ?>" placeholder="000.000.000-00">
+                <script src="<?= APP_URL ?>/js/cpf-mask.js"></script>
                 <small class="muted">Use apenas os 11 digitos, sem pontuacao.</small>
             </div>
             <div>
@@ -66,7 +67,7 @@
                 <label>Documentos anexados</label>
                 <?php foreach ($documents as $doc): ?>
                     <div class="actions" style="margin-bottom:6px;">
-                        <a class="link" target="_blank" href="<?= APP_URL . '/' . e($doc['file_path']) ?>"><?= e($doc['original_name']) ?></a>
+                        <a class="link" href="<?= APP_URL ?>/?route=patient.document&id=<?= (int) $doc['id'] ?>"><?= e($doc['original_name']) ?></a>
                         <small class="muted"><?= e(formatDateTimeBr($doc['created_at'])) ?> (<?= e(number_format(((int) $doc['file_size']) / 1024, 1, ',', '.')) ?> KB)</small>
                         <form method="post" action="<?= APP_URL ?>/?route=patient.document.delete">
                             <?= csrfInput() ?>

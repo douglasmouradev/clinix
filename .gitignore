@@ -1,5 +1,9 @@
 .env
+vendor/
 storage/cache/*
 storage/logs/*
+storage/uploads/*
+storage/backups/*
 public/uploads/*
 acessos
+.phpunit.result.cache

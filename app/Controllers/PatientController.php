@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\CpfValidator;
+use App\Core\DocumentStorage;
 use App\Core\View;
 use App\Models\Lgpd;
 use App\Models\Patient;
@@ -47,8 +49,9 @@ final class PatientController
             'lgpd_consent_version' => !empty($_POST['lgpd_consent']) ? 'v1.0' : null,
         ];
 
-        if ($data['full_name'] === '' || strlen($data['cpf']) !== 11) {
-            View::render('patients/form', ['patient' => array_merge(['id' => $id], $data), 'error' => 'Nome e CPF válido sao obrigatorios.']);
+        $data['cpf'] = CpfValidator::normalize($data['cpf']);
+        if ($data['full_name'] === '' || !CpfValidator::isValid($data['cpf'])) {
+            View::render('patients/form', ['patient' => array_merge(['id' => $id], $data), 'error' => 'Nome e CPF válido são obrigatórios.']);
             return;
         }
 
@@ -64,6 +67,13 @@ final class PatientController
             flash('success', 'Paciente atualizado com sucesso.');
             redirect('/?route=patient.history&id=' . $id);
         } else {
+            if (!(new \App\Models\Billing())->canCreatePatient(tenantId())) {
+                View::render('patients/form', [
+                    'patient' => array_merge(['id' => 0], $data),
+                    'error' => 'Limite de pacientes do plano atingido ou assinatura irregular. Verifique Billing.',
+                ]);
+                return;
+            }
             $newId = $patientModel->create($data);
             $this->handlePatientDocumentUpload($patientModel, $newId);
             if (!empty($_POST['lgpd_consent'])) {
@@ -128,27 +138,21 @@ final class PatientController
         $timeline = (new Record())->timeline($patientId, $filters);
         $canViewClinicalContent = in_array($role, ['admin', 'nurse', 'doctor'], true);
 
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="historico_paciente_' . $patientId . '.csv"');
+        $output = csvBeginDownload('historico_paciente_' . $patientId . '.csv');
 
-        $output = fopen('php://output', 'wb');
-        if ($output === false) {
-            exit;
-        }
-
-        fputcsv($output, ['Paciente', $patient['full_name']]);
-        fputcsv($output, ['CPF', $patient['cpf']]);
-        fputcsv($output, ['Nascimento', $patient['birth_date']]);
-        fputcsv($output, []);
-        fputcsv($output, ['Tipo', 'Profissional', 'Perfil', 'Data', 'Conteudo']);
+        csvWriteRow($output, ['Paciente', (string) $patient['full_name']]);
+        csvWriteRow($output, ['CPF', (string) ($patient['cpf'] ?? '')]);
+        csvWriteRow($output, ['Nascimento', (string) ($patient['birth_date'] ?? '')]);
+        csvWriteRow($output, []);
+        csvWriteRow($output, ['Tipo', 'Profissional', 'Perfil', 'Data', 'Conteudo']);
 
         foreach ($timeline as $item) {
-            fputcsv($output, [
-                $item['entry_type'],
-                $item['professional_name'],
-                roleLabel($item['role']),
-                formatDateTimeBr($item['created_at']),
-                $canViewClinicalContent ? $item['content'] : 'Conteudo clinico restrito para este perfil.',
+            csvWriteRow($output, [
+                (string) $item['entry_type'],
+                (string) $item['professional_name'],
+                roleLabel((string) $item['role']),
+                formatDateTimeBr((string) $item['created_at']),
+                $canViewClinicalContent ? (string) $item['content'] : 'Conteudo clinico restrito para este perfil.',
             ]);
         }
 
@@ -158,56 +162,24 @@ final class PatientController
 
     private function handlePatientDocumentUpload(Patient $patientModel, int $patientId): void
     {
-        if (!isset($_FILES['document']) || (int) ($_FILES['document']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        if (!isset($_FILES['document'])) {
             return;
         }
 
-        $file = $_FILES['document'];
-        if ((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            flash('error', 'Falha ao anexar documento do paciente.');
+        $stored = DocumentStorage::storeUploaded($_FILES['document'], 'patients');
+        if ($stored === null) {
+            flash('error', 'Falha ao anexar documento do paciente (formato ou tamanho inválido).');
             return;
         }
 
-        $tmpName = (string) ($file['tmp_name'] ?? '');
-        $originalName = (string) ($file['name'] ?? '');
-        $fileSize = (int) ($file['size'] ?? 0);
-        $mimeType = (string) mime_content_type($tmpName);
-
-        $allowedMime = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ];
-
-        if (!in_array($mimeType, $allowedMime, true)) {
-            flash('error', 'Formato não permitido para anexo do paciente.');
-            return;
-        }
-
-        if ($fileSize > 5 * 1024 * 1024) {
-            flash('error', 'Anexo do paciente excede o limite de 5MB.');
-            return;
-        }
-
-        $uploadDir = __DIR__ . '/../../public/uploads/patients/' . tenantId();
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-            flash('error', 'Não foi possivel criar diretorio de anexos do paciente.');
-            return;
-        }
-
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $safeName = bin2hex(random_bytes(16)) . ($extension !== '' ? '.' . strtolower($extension) : '');
-        $targetPath = $uploadDir . '/' . $safeName;
-
-        if (!move_uploaded_file($tmpName, $targetPath)) {
-            flash('error', 'Falha ao salvar anexo do paciente.');
-            return;
-        }
-
-        $publicPath = 'uploads/patients/' . tenantId() . '/' . $safeName;
-        $patientModel->addDocument($patientId, $originalName, $safeName, $publicPath, $mimeType, $fileSize);
+        $patientModel->addDocument(
+            $patientId,
+            $stored['original_name'],
+            $stored['stored_name'],
+            $stored['file_path'],
+            $stored['mime_type'],
+            $stored['file_size']
+        );
     }
 
     public function deleteDocument(): void
@@ -219,10 +191,7 @@ final class PatientController
         if ($documentId > 0 && $patientId > 0) {
             $doc = (new Patient())->deleteDocument($documentId);
             if ($doc) {
-                $path = __DIR__ . '/../../public/' . ltrim((string) $doc['file_path'], '/');
-                if (is_file($path)) {
-                    @unlink($path);
-                }
+                DocumentStorage::delete((string) $doc['file_path']);
                 auditLog('patient.document.delete', 'Documento de paciente ID ' . $documentId . ' removido');
                 flash('success', 'Documento removido.');
             }

@@ -1,89 +1,96 @@
 # Clinix - SaaS para Clínica Medica (PHP + MySQL)
 
-Sistema SaaS para clinicas de pequeno e medio porte, com autenticacao por sessão, controle de acesso por perfil e prontuário eletronico compartilhado.
+Sistema SaaS para clínicas de pequeno e médio porte, com autenticação por sessão, controle de acesso por perfil e prontuário eletrônico compartilhado.
 
 ## Arquitetura
 
 - PHP 8.2+ sem framework pesado
+- Router central com papéis por rota (`app/Core/Router.php`)
 - Estrutura em camadas (Controllers, Models, Core, Views)
-- Front controller em `public/index.php`
-- PDO com prepared statements em todos os acessos ao banco
-- Sessão para autenticacao e autorizacao por papel
+- Front controller em `public/index.php` (use `public/router.php` em produção)
+- PDO com prepared statements
+- Sessão segura + CSRF + rate limit de login
 
-## Estrutura de pastas
+## Segurança e compliance
 
-- `app/Config`: configuracoes de ambiente
-- `app/Core`: infraestrutura base (banco, auth, renderizacao)
-- `app/Controllers`: regras de fluxo por modulo
-- `app/Models`: acesso a dados
-- `app/Views`: telas HTML/CSS/JS
-- `database/schema.sql`: criacao do banco e dados iniciais
-- `public/index.php`: ponto de entrada da aplicacao
+- Anexos em `storage/uploads` (download autenticado, `/uploads` bloqueado)
+- Política de senha forte (10+ caracteres) + troca obrigatória no primeiro login
+- 2FA (TOTP) opcional por usuário
+- Prontuário com retificação versionada (`patient_record_versions`)
+- Validação de CPF com dígitos verificadores
+- LGPD: retenção automática via cron + execução manual no compliance
+- Auditoria consultável em Admin → Auditoria
+- Esqueci minha senha (link no login; em local o link também vai para `storage/logs/password-reset.log`)
+- Billing com checkout Stripe (`STRIPE_SECRET_KEY`) e webhook (`STRIPE_WEBHOOK_SECRET`)
+- Limite de pacientes/usuários por plano (`max_patients`, `max_users`)
 
-## Perfis suportados
+## Fila e painel TV
 
-- Admin: gestao de usuários e perfis
-- Recepção: cadastro/edicao de pacientes, geracao de senha e fila
-- Enfermeira: chamada para triagem e pre-atendimento no prontuário
-- Médico: consulta completa, diagnóstico, prescrição e observacoes
+- Fila com AJAX (chamar/finalizar sem recarregar)
+- Painel com polling leve (4s local); SSE só em produção (`PANEL_USE_SSE=0` para desativar)
+- Histórico das últimas 5 chamadas no painel
+- URL: `/?route=queue.panel&tenant=SLUG&token=TOKEN` (ver Admin → Token do painel)
 
-## Melhorias de producao implementadas
+## Administração
 
-- Protecao CSRF em todos os formularios `POST`
-- Sessão mais segura (cookie httponly/samesite + timeout de inatividade)
-- Auditoria basica de operacoes criticas em `audit_logs`
-- Busca de pacientes por nome, CPF e telefone
-- Finalizacao de atendimento na fila (`done`) com acao na tela
-- Mensagens de feedback (sucesso/erro) apos operacoes
-- Rate limit de login por usuário/IP com bloqueio temporario
-- Painel publico protegido por token de acesso
-- Filtros de histórico clinico por tipo e período
-- Exportacao de histórico clinico em CSV
-- Controle de status de conta de usuário (ativo/inativo)
-- Rotacao de token do painel via administração
-- Base multi-tenant com isolamento por `tenant_id`
-- Configuração por ambiente via `.env`
-- Agenda de consultas com status operacional
-- Triagem estruturada (PA, FC, temperatura, SpO2, glicemia, dor)
-- Anexos avancados com exclusao segura
-- Billing SaaS com planos, assinaturas e faturas
-- Onboarding automatico de tenant (clínica + admin)
-- Limites por plano (usuários ativos)
-- LGPD avancado (consentimento, exportacao e anonimização)
-- Relatórios executivos com KPIs e filtros por período
-- Performance tuning com cache leve e novos indexes
-- Hardening enterprise: histórico versionado de consentimento
-- Política de retenção LGPD por tenant com execucao manual
-- Exportacao executiva em CSV para diretoria
+- Dashboard com KPIs (pacientes, fila, consultas do dia)
+- Tokens de API: Admin → API
+- Desativar 2FA: Admin → 2FA (com senha atual)
+- Conflito de horário na agenda (mesmo profissional)
 
-## Painel em TV (outra tela)
+## API REST (token)
 
-- URL protegida: `http://localhost:8000/?route=queue.panel&token=SEU_TOKEN`
-- Token gerenciado pelo admin em `/?route=admin.panel` (fallback na variavel `PANEL_ACCESS_TOKEN` do `.env`)
+Headers: `X-Api-Token: seu-token` (cadastre em Admin → API)
 
-## Como rodar
+- `GET /?route=api.v1.patients&q=busca`
+- `GET /?route=api.v1.queue`
 
-1. Crie seu arquivo de ambiente:
-   - `cp .env.example .env`
-2. Ajuste credenciais no `.env`.
-3. Importe o SQL:
-   - `mysql -u root -p < database/schema.sql`
-4. Execute migrations incrementais:
-   - `php database/migrate.php`
-5. Inicie servidor local:
-   - `php -S localhost:8000 -t public`
-6. Acesse:
-   - `http://localhost:8000/?route=login`
+## Como rodar (local)
 
-## Qualidade e smoke test
+```bash
+cp .env.example .env
+# Ajuste DB_* no .env
+mysql -u root -p < database/schema.sql
+php database/migrate.php
+php -S localhost:8000 -t public public/router.php
+```
 
-- Validacao completa: `./scripts/quality-check.sh`
-- Teste de fumaca: `./scripts/smoke-test.sh`
+Acesse: http://localhost:8000/?route=login
 
-## Usuários de teste
+## Docker
 
-- admin / 123456
-- recepção / 123456
-- enfermeira / 123456
-- médico / 123456
+```bash
+docker compose up --build
+# App: http://localhost:8080
+```
 
+## Qualidade
+
+```bash
+./scripts/quality-check.sh
+./scripts/smoke-test.sh
+composer install --no-interaction
+./vendor/bin/phpunit
+```
+
+## Backup
+
+Ver [docs/BACKUP.md](docs/BACKUP.md) e `./scripts/backup-db.sh`.
+
+## Cron (retenção LGPD + lembretes)
+
+```bash
+curl "http://localhost:8000/?route=cron.retention&secret=SEU_CRON_SECRET"
+```
+
+## Usuários demo (após migration 20260520)
+
+- Clínica (slug): `clinica-demo`
+- Usuários: `admin`, `recepção`, `enfermeira`, `médico`
+- Senha inicial: `ChangeMe2026!` (troca obrigatória no primeiro login)
+
+## Produção
+
+- Use `public/router.php` no servidor built-in ou Apache/Nginx apontando para `public/`
+- Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CRON_SECRET`, `APP_URL`, `MAIL_FROM` / `SMTP_*`
+- Não exponha `storage/` nem `public/uploads/` diretamente

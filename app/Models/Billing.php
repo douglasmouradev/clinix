@@ -14,12 +14,13 @@ final class Billing
         return $stmt->fetchAll();
     }
 
-    public function currentSubscription(int $tenantId): ?array
+    public function currentSubscription(int $tenantId, bool $activeOnly = true): ?array
     {
+        $statusFilter = $activeOnly ? 'ts.status = "active"' : 'ts.status IN ("active", "past_due")';
         $sql = 'SELECT ts.*, p.code AS plan_code, p.name AS plan_name, p.max_users, p.max_patients, p.monthly_price_cents
                 FROM tenant_subscriptions ts
                 INNER JOIN plans p ON p.id = ts.plan_id
-                WHERE ts.tenant_id = :tenant_id AND ts.status = "active"
+                WHERE ts.tenant_id = :tenant_id AND ' . $statusFilter . '
                 ORDER BY ts.id DESC
                 LIMIT 1';
         $stmt = Database::connection()->prepare($sql);
@@ -88,6 +89,65 @@ final class Billing
         $activeUsers = (int) $stmt->fetchColumn();
 
         return $activeUsers < (int) $sub['max_users'];
+    }
+
+    public function canCreatePatient(int $tenantId): bool
+    {
+        $sub = $this->currentSubscription($tenantId, true);
+        if (!$sub) {
+            return false;
+        }
+
+        $stmt = Database::connection()->prepare(
+            'SELECT COUNT(*) FROM patients WHERE tenant_id = :tenant_id AND anonymized_at IS NULL'
+        );
+        $stmt->execute(['tenant_id' => $tenantId]);
+
+        return (int) $stmt->fetchColumn() < (int) $sub['max_patients'];
+    }
+
+    public function isPastDue(int $tenantId): bool
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT COUNT(*) FROM tenant_subscriptions WHERE tenant_id = :tenant_id AND status = "past_due"'
+        );
+        $stmt->execute(['tenant_id' => $tenantId]);
+
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function markInvoicePaid(int $invoiceId, ?string $stripeInvoiceId = null): void
+    {
+        $sql = 'UPDATE invoices SET status = "paid", paid_at = NOW(), stripe_invoice_id = COALESCE(:stripe_id, stripe_invoice_id)
+                WHERE id = :id';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['id' => $invoiceId, 'stripe_id' => $stripeInvoiceId]);
+    }
+
+    public function markSubscriptionPastDue(int $tenantId): void
+    {
+        $stmt = Database::connection()->prepare(
+            'UPDATE tenant_subscriptions SET status = "past_due" WHERE tenant_id = :tenant_id AND status = "active"'
+        );
+        $stmt->execute(['tenant_id' => $tenantId]);
+    }
+
+    public function markSubscriptionActive(int $tenantId): void
+    {
+        $stmt = Database::connection()->prepare(
+            'UPDATE tenant_subscriptions SET status = "active" WHERE tenant_id = :tenant_id ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute(['tenant_id' => $tenantId]);
+    }
+
+    public function findOpenInvoiceByStripeId(string $stripeInvoiceId): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM invoices WHERE stripe_invoice_id = :stripe_id LIMIT 1'
+        );
+        $stmt->execute(['stripe_id' => $stripeInvoiceId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 }
 

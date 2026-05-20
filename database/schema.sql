@@ -237,7 +237,7 @@ CREATE TABLE tenant_retention_policies (
 );
 
 INSERT INTO tenants (id, name, slug, is_active) VALUES
-(1, 'Clínica Demo', 'clínica-demo', 1);
+(1, 'Clínica Demo', 'clinica-demo', 1);
 
 INSERT INTO app_settings (tenant_id, `key`, `value`) VALUES
 (1, 'panel_access_token', 'clinix-painel-2026')

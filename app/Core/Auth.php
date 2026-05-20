@@ -45,8 +45,40 @@ final class Auth
             'name' => $user['name'],
             'role' => $user['role'],
             'tenant_id' => (int) ($user['tenant_id'] ?? DEFAULT_TENANT_ID),
+            'must_change_password' => (int) ($user['must_change_password'] ?? 0),
+            'two_factor_enabled' => (int) ($user['two_factor_enabled'] ?? 0),
         ];
         $_SESSION['last_activity_at'] = time();
+    }
+
+    public static function mustChangePassword(): bool
+    {
+        return self::check() && (int) ($_SESSION['user']['must_change_password'] ?? 0) === 1;
+    }
+
+    public static function clearMustChangePassword(): void
+    {
+        if (self::check()) {
+            $_SESSION['user']['must_change_password'] = 0;
+        }
+    }
+
+    /** @var list<string> */
+    private const PASSWORD_CHANGE_ROUTES = [
+        'password.change', 'password.change.submit', 'logout',
+    ];
+
+    public static function enforcePasswordChange(string $route): void
+    {
+        if (!self::mustChangePassword()) {
+            return;
+        }
+
+        if (in_array($route, self::PASSWORD_CHANGE_ROUTES, true)) {
+            return;
+        }
+
+        redirect('/?route=password.change');
     }
 
     public static function enforceSessionSecurity(): void

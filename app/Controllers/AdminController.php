@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Core\PasswordPolicy;
 use App\Core\View;
 use App\Models\Billing;
 use App\Models\Tenant;
@@ -102,22 +103,24 @@ final class AdminController
 
             $userModel->update($id, ['name' => $name, 'username' => $username, 'role' => $role, 'is_active' => $isActive]);
             if ($password !== '') {
-                if (strlen($password) < 6) {
+                $policyError = PasswordPolicy::validate($password);
+                if ($policyError !== null) {
                     View::render('dashboard/user_form', [
                         'editUser' => ['id' => $id, 'name' => $name, 'username' => $username, 'role' => $role, 'is_active' => $isActive],
-                        'error' => 'A senha deve ter no mínimo 6 caracteres.',
+                        'error' => $policyError,
                     ]);
                     return;
                 }
-                $userModel->updatePassword($id, password_hash($password, PASSWORD_DEFAULT));
+                $userModel->updatePassword($id, PasswordPolicy::hash($password), true);
             }
             auditLog('admin.user.update', 'Usuário ID ' . $id . ' atualizado');
             flash('success', 'Usuário atualizado com sucesso.');
         } else {
-            if (strlen($password) < 6) {
+            $policyError = PasswordPolicy::validate($password);
+            if ($policyError !== null) {
                 View::render('dashboard/user_form', [
                     'editUser' => ['name' => $name, 'username' => $username, 'role' => $role],
-                    'error' => 'Informe uma senha com no mínimo 6 caracteres.',
+                    'error' => $policyError,
                 ]);
                 return;
             }
@@ -125,7 +128,7 @@ final class AdminController
             $userModel->create([
                 'name' => $name,
                 'username' => $username,
-                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'password_hash' => PasswordPolicy::hash($password),
                 'role' => $role,
                 'is_active' => $isActive,
             ]);
@@ -139,7 +142,11 @@ final class AdminController
     public function panelSettings(): void
     {
         Auth::requireRole(['admin']);
-        View::render('dashboard/panel_settings', ['panelToken' => $this->currentPanelToken()]);
+        $tenant = (new Tenant())->find(tenantId());
+        View::render('dashboard/panel_settings', [
+            'panelToken' => $this->currentPanelToken(),
+            'tenantSlug' => (string) ($tenant['slug'] ?? ''),
+        ]);
     }
 
     public function clinicSlug(): void
@@ -198,6 +205,42 @@ final class AdminController
         auditLog('admin.panel.rotate_token', 'Token do painel rotacionado');
         flash('success', 'Token do painel atualizado com sucesso.');
         redirect('/?route=admin.panel');
+    }
+
+    public function apiTokens(): void
+    {
+        $created = $_SESSION['api_token_plain'] ?? null;
+        unset($_SESSION['api_token_plain']);
+        View::render('dashboard/api_tokens', [
+            'tokens' => (new \App\Models\ApiToken())->all(),
+            'createdToken' => $created,
+        ]);
+    }
+
+    public function apiTokenCreate(): void
+    {
+        $name = trim((string) ($_POST['name'] ?? ''));
+        if ($name === '') {
+            flash('error', 'Informe um nome para o token.');
+            redirect('/?route=admin.api');
+            return;
+        }
+        $plain = (new \App\Models\ApiToken())->create($name);
+        $_SESSION['api_token_plain'] = $plain;
+        auditLog('admin.api.create', 'Token API criado: ' . $name);
+        flash('success', 'Token criado. Copie agora — não será exibido novamente.');
+        redirect('/?route=admin.api');
+    }
+
+    public function apiTokenRevoke(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        if ($id > 0) {
+            (new \App\Models\ApiToken())->revoke($id);
+            auditLog('admin.api.revoke', 'Token API ID ' . $id . ' revogado');
+            flash('success', 'Token revogado.');
+        }
+        redirect('/?route=admin.api');
     }
 
     private function currentPanelToken(): string

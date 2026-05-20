@@ -27,9 +27,23 @@ final class User
 
     public function findByUsername(string $username): ?array
     {
-        $sql = 'SELECT id, name, username, password_hash, role, is_active, tenant_id FROM users WHERE username = :username AND tenant_id = :tenant_id LIMIT 1';
+        $sql = 'SELECT id, name, username, password_hash, role, is_active, tenant_id,
+                       must_change_password, two_factor_enabled, two_factor_secret
+                FROM users WHERE username = :username AND tenant_id = :tenant_id LIMIT 1';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['username' => $username, 'tenant_id' => tenantId()]);
+        $user = $stmt->fetch();
+
+        return $user ?: null;
+    }
+
+    public function findWithSecrets(int $id): ?array
+    {
+        $sql = 'SELECT id, name, username, password_hash, role, is_active, tenant_id,
+                       must_change_password, two_factor_enabled, two_factor_secret
+                FROM users WHERE id = :id AND tenant_id = :tenant_id LIMIT 1';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
         $user = $stmt->fetch();
 
         return $user ?: null;
@@ -52,11 +66,28 @@ final class User
         $stmt->execute($data);
     }
 
-    public function updatePassword(int $id, string $passwordHash): void
+    public function updatePassword(int $id, string $passwordHash, bool $mustChange = false): void
     {
-        $sql = 'UPDATE users SET password_hash = :password_hash WHERE id = :id AND tenant_id = :tenant_id';
+        $sql = 'UPDATE users SET password_hash = :password_hash, must_change_password = :must_change WHERE id = :id AND tenant_id = :tenant_id';
         $stmt = Database::connection()->prepare($sql);
-        $stmt->execute(['id' => $id, 'password_hash' => $passwordHash, 'tenant_id' => tenantId()]);
+        $stmt->execute([
+            'id' => $id,
+            'password_hash' => $passwordHash,
+            'must_change' => $mustChange ? 1 : 0,
+            'tenant_id' => tenantId(),
+        ]);
+    }
+
+    public function setTwoFactor(int $id, ?string $secret, bool $enabled): void
+    {
+        $sql = 'UPDATE users SET two_factor_secret = :secret, two_factor_enabled = :enabled WHERE id = :id AND tenant_id = :tenant_id';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute([
+            'id' => $id,
+            'secret' => $secret,
+            'enabled' => $enabled ? 1 : 0,
+            'tenant_id' => tenantId(),
+        ]);
     }
 
     public function existsByUsername(string $username, ?int $ignoreId = null): bool

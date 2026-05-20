@@ -1,32 +1,60 @@
-<div class="card">
+<?php
+$recentCalls = $recentCalls ?? [];
+$displayCalled = $displayCalled ?? null;
+?>
+<div class="card panel-display-card">
     <div class="card-title">
         <div>
             <h2>Painel de Chamada</h2>
-            <p class="muted">Atualizacao automatica a cada 10 segundos.</p>
+            <p class="muted">Atualização automática a cada <?= (int) (($panelPollMs ?? 4000) / 1000) ?> segundos.</p>
         </div>
+        <span class="pill" id="panel-waiting-count"><?= (int) ($waiting_count ?? 0) ?> aguardando</span>
     </div>
-    <div id="panel-content">
-        <?php if (empty($queue)): ?>
-            <p>Sem pacientes na fila.</p>
-        <?php else: ?>
-            <?php $last = $queue[0]; ?>
-            <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:16px;padding:24px;">
-                <h1 style="font-size:52px;margin:0;color:#1e3a8a;">Senha <?= e($last['ticket_number']) ?></h1>
-                <p style="font-size:24px;color:#0f172a;margin-top:8px;">Paciente: <?= e($last['full_name']) ?></p>
-                <p style="font-size:20px;color:#334155;">Sala: <?= e($last['room'] ?? 'A definir') ?></p>
+    <div id="panel-content" class="panel-content" aria-live="polite" aria-atomic="true">
+        <?php if ($displayCalled): ?>
+            <div class="panel-call-card <?= !empty($displayCalled['live']) ? 'panel-call-active' : 'panel-call-last' ?>">
+                <p class="panel-call-label"><?= !empty($displayCalled['live']) ? 'Senha chamada agora' : 'Última chamada' ?></p>
+                <h1 class="panel-call-number">#<?= e((string) $displayCalled['ticket_number']) ?></h1>
+                <p class="panel-call-name"><?= e((string) $displayCalled['full_name']) ?></p>
+                <p class="panel-call-room">Dirija-se a: <strong><?= e((string) ($displayCalled['room'] ?: 'A definir')) ?></strong></p>
             </div>
+        <?php else: ?>
+            <div class="panel-call-card panel-call-idle">
+                <p class="panel-call-label">Aguardando</p>
+                <h1 class="panel-call-number">—</h1>
+                <p class="panel-call-name">Nenhuma senha chamada hoje</p>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="panel-recent" id="panel-recent">
+        <h3>Últimas pessoas chamadas</h3>
+        <?php if ($recentCalls === []): ?>
+            <p class="muted panel-recent-empty">Nenhuma chamada registrada hoje.</p>
+        <?php else: ?>
+            <ul class="panel-recent-list">
+                <?php foreach ($recentCalls as $item): ?>
+                    <li class="panel-recent-item">
+                        <span class="panel-recent-number">#<?= e((string) $item['ticket_number']) ?></span>
+                        <span class="panel-recent-name"><?= e((string) $item['full_name']) ?></span>
+                        <span class="panel-recent-meta">
+                            <?= e((string) ($item['room'] ?: '-')) ?>
+                            <?php if (!empty($item['time_label'])): ?>
+                                · <?= e((string) $item['time_label']) ?>
+                            <?php endif; ?>
+                        </span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         <?php endif; ?>
     </div>
 </div>
 <script>
-    setInterval(function () {
-        fetch(window.location.pathname + window.location.search, {headers: {'X-Panel-Refresh': '1'}})
-            .then(function (response) { return response.text(); })
-            .then(function (html) {
-                var doc = new DOMParser().parseFromString(html, 'text/html');
-                var content = doc.querySelector('#panel-content');
-                if (content) document.querySelector('#panel-content').innerHTML = content.innerHTML;
-            });
-    }, 10000);
+    window.CLINIX_PANEL = {
+        dataUrl: <?= json_encode($panelDataUrl, JSON_UNESCAPED_UNICODE) ?>,
+        useSse: <?= !empty($panelUseSse) ? 'true' : 'false' ?>,
+        initial: <?= json_encode($panelInitialPayload ?? null, JSON_UNESCAPED_UNICODE) ?>,
+        pollMs: <?= (int) ($panelPollMs ?? 4000) ?>
+    };
 </script>
-
+<script src="<?= APP_URL ?>/js/queue-panel.js?v=3" defer></script>

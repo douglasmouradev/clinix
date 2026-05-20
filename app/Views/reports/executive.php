@@ -32,6 +32,7 @@ $appointmentsByStatus = $appointmentsByStatus ?? [];
     <div class="stat"><strong>Senhas geradas</strong><p><?= (int) ($kpis['queue_total'] ?? 0) ?></p></div>
     <div class="stat"><strong>Registros clinicos</strong><p><?= (int) ($kpis['records_total'] ?? 0) ?></p></div>
     <div class="stat"><strong>Usuários ativos</strong><p><?= (int) ($kpis['active_users'] ?? 0) ?></p></div>
+    <div class="stat"><strong>Tempo médio na fila</strong><p><?= e((string) ($kpis['queue_avg_wait_minutes'] ?? 0)) ?> min</p></div>
 </div>
 
 <div class="card">

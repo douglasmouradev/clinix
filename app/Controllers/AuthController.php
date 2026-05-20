@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Core\Totp;
 use App\Core\View;
 use App\Models\Tenant;
 use App\Models\User;
@@ -27,7 +28,7 @@ final class AuthController
         $tenantSlug = trim((string) ($_POST['tenant_slug'] ?? ''));
 
         if ($tenantSlug === '' || $username === '' || $password === '') {
-            View::render('auth/login', ['error' => 'Informe usuário e senha.']);
+            View::render('auth/login', ['error' => 'Informe usuário e senha.', 'tenant_slug' => $tenantSlug]);
             return;
         }
 
@@ -39,34 +40,83 @@ final class AuthController
         $_SESSION['tenant_context_id'] = (int) $tenant['id'];
 
         if ($this->isLocked($username)) {
-            View::render('auth/login', ['error' => 'Muitas tentativas. Aguarde 15 minutos e tente novamente.']);
+            View::render('auth/login', ['error' => 'Muitas tentativas. Aguarde 15 minutos e tente novamente.', 'tenant_slug' => $tenantSlug]);
             return;
         }
 
         $user = (new User())->findByUsername($username);
         if ($user && (int) ($user['is_active'] ?? 1) === 0) {
-            View::render('auth/login', ['error' => 'Conta inativa. Procure o administrador.']);
+            View::render('auth/login', ['error' => 'Conta inativa. Procure o administrador.', 'tenant_slug' => $tenantSlug]);
             return;
         }
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $this->registerFailure($username);
-            View::render('auth/login', ['error' => 'Credenciais invalidas.']);
+            View::render('auth/login', ['error' => 'Credenciais invalidas.', 'tenant_slug' => $tenantSlug]);
             return;
         }
 
         $this->clearAttempts($username);
-        Auth::login($user);
-        auditLog('auth.login', 'Usuário autenticado');
-        flash('success', 'Login realizado com sucesso.');
-        redirect('/?route=dashboard');
+
+        if ((int) ($user['two_factor_enabled'] ?? 0) === 1) {
+            $_SESSION['pending_2fa_user'] = $user;
+            redirect('/?route=login.2fa');
+            return;
+        }
+
+        $this->completeLogin($user);
+    }
+
+    public function twoFactorForm(): void
+    {
+        if (empty($_SESSION['pending_2fa_user'])) {
+            redirect('/?route=login');
+            return;
+        }
+
+        View::render('auth/two_factor', []);
+    }
+
+    public function twoFactorVerify(): void
+    {
+        $user = $_SESSION['pending_2fa_user'] ?? null;
+        if (!$user) {
+            redirect('/?route=login');
+            return;
+        }
+
+        $code = trim((string) ($_POST['code'] ?? ''));
+        $secret = (string) ($user['two_factor_secret'] ?? '');
+        if ($secret === '' || !Totp::verify($secret, $code)) {
+            View::render('auth/two_factor', ['error' => 'Código inválido.']);
+            return;
+        }
+
+        unset($_SESSION['pending_2fa_user']);
+        $this->completeLogin($user);
     }
 
     public function logout(): void
     {
-        auditLog('auth.logout', 'Usuário encerrou sessão');
+        if (Auth::check()) {
+            auditLog('auth.logout', 'Usuário encerrou sessão');
+        }
         Auth::logout();
         redirect('/?route=login');
+    }
+
+    private function completeLogin(array $user): void
+    {
+        Auth::login($user);
+        auditLog('auth.login', 'Usuário autenticado');
+        if (Auth::mustChangePassword()) {
+            flash('info', 'Defina uma nova senha para continuar.');
+            redirect('/?route=password.change');
+            return;
+        }
+
+        flash('success', 'Login realizado com sucesso.');
+        redirect('/?route=dashboard');
     }
 
     private function getIpAddress(): string
@@ -109,4 +159,3 @@ final class AuthController
         $stmt->execute(['username' => $username, 'ip' => $this->getIpAddress(), 'tenant_id' => tenantId()]);
     }
 }
-

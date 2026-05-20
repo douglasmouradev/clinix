@@ -45,10 +45,41 @@ final class Appointment
 
     public function create(array $data): void
     {
-        $sql = 'INSERT INTO appointments (tenant_id, patient_id, professional_id, scheduled_at, status, reason, notes, created_by)
-                VALUES (:tenant_id, :patient_id, :professional_id, :scheduled_at, :status, :reason, :notes, :created_by)';
+        $sql = 'INSERT INTO appointments (tenant_id, patient_id, professional_id, scheduled_at, status, reason, notes, confirm_token, created_by)
+                VALUES (:tenant_id, :patient_id, :professional_id, :scheduled_at, :status, :reason, :notes, :confirm_token, :created_by)';
         $stmt = Database::connection()->prepare($sql);
-        $stmt->execute($data + ['tenant_id' => tenantId()]);
+        $stmt->execute($data + [
+            'tenant_id' => tenantId(),
+            'confirm_token' => bin2hex(random_bytes(16)),
+        ]);
+    }
+
+    public function week(string $startDate): array
+    {
+        $end = date('Y-m-d', strtotime($startDate . ' +6 days'));
+        $sql = 'SELECT a.*, p.full_name AS patient_name, u.name AS professional_name
+                FROM appointments a
+                INNER JOIN patients p ON p.id = a.patient_id
+                LEFT JOIN users u ON u.id = a.professional_id
+                WHERE a.tenant_id = :tenant_id
+                  AND DATE(a.scheduled_at) BETWEEN :start AND :end
+                ORDER BY a.scheduled_at ASC';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId(), 'start' => $startDate, 'end' => $end]);
+        return $stmt->fetchAll();
+    }
+
+    public function findByConfirmToken(string $token): ?array
+    {
+        if ($token === '') {
+            return null;
+        }
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM appointments WHERE confirm_token = :token LIMIT 1'
+        );
+        $stmt->execute(['token' => $token]);
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 
     public function update(int $id, array $data): void
@@ -66,6 +97,35 @@ final class Appointment
         $sql = 'UPDATE appointments SET status = :status WHERE id = :id AND tenant_id = :tenant_id';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['status' => $status, 'id' => $id, 'tenant_id' => tenantId()]);
+    }
+
+    public function hasConflict(?int $professionalId, string $scheduledAt, ?int $ignoreId = null): bool
+    {
+        if ($professionalId === null || $professionalId <= 0) {
+            return false;
+        }
+
+        $start = date('Y-m-d H:i:s', strtotime($scheduledAt . ' -29 minutes'));
+        $end = date('Y-m-d H:i:s', strtotime($scheduledAt . ' +29 minutes'));
+        $sql = 'SELECT COUNT(*) FROM appointments
+                WHERE tenant_id = :tenant_id AND professional_id = :professional_id
+                  AND status NOT IN ("cancelled", "completed")
+                  AND scheduled_at BETWEEN :start AND :end';
+        $params = [
+            'tenant_id' => tenantId(),
+            'professional_id' => $professionalId,
+            'start' => $start,
+            'end' => $end,
+        ];
+        if ($ignoreId !== null && $ignoreId > 0) {
+            $sql .= ' AND id <> :ignore_id';
+            $params['ignore_id'] = $ignoreId;
+        }
+
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 }
 

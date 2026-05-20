@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Core\PasswordPolicy;
 use App\Core\View;
 use App\Models\Billing;
 use App\Models\Tenant;
@@ -25,8 +26,9 @@ final class OnboardingController
         $username = trim((string) ($_POST['username'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
 
-        if ($clinicName === '' || $slug === '' || $adminName === '' || $username === '' || strlen($password) < 6) {
-            View::render('auth/onboarding', ['error' => 'Preencha os dados obrigatorios e senha com no mínimo 6 caracteres.']);
+        $policyError = PasswordPolicy::validate($password);
+        if ($clinicName === '' || $slug === '' || $adminName === '' || $username === '' || $policyError !== null) {
+            View::render('auth/onboarding', ['error' => $policyError ?? 'Preencha os dados obrigatórios.']);
             return;
         }
 
@@ -49,7 +51,7 @@ final class OnboardingController
                 'tenant_id' => $tenantId,
                 'name' => $adminName,
                 'username' => $username,
-                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'password_hash' => PasswordPolicy::hash($password),
             ]);
             $userId = (int) $conn->lastInsertId();
 

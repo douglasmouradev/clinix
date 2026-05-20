@@ -38,29 +38,24 @@ final class ReportsController
         $kpis = $model->kpis($dateFrom, $dateTo);
         $appointmentsByStatus = $model->appointmentsByStatus($dateFrom, $dateTo);
 
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="relatorio_executivo_' . $dateFrom . '_' . $dateTo . '.csv"');
-        $output = fopen('php://output', 'wb');
-        if ($output === false) {
-            exit;
+        $output = csvBeginDownload('relatorio_executivo_' . $dateFrom . '_' . $dateTo . '.csv');
+
+        csvWriteRow($output, ['Clinix', 'Relatorio Executivo']);
+        csvWriteRow($output, ['Periodo', $dateFrom . ' a ' . $dateTo]);
+        csvWriteRow($output, []);
+        csvWriteRow($output, ['KPI', 'Valor']);
+        csvWriteRow($output, ['Pacientes ativos', (string) ($kpis['active_patients'] ?? 0)]);
+        csvWriteRow($output, ['Agendamentos', (string) ($kpis['appointments_total'] ?? 0)]);
+        csvWriteRow($output, ['Senhas geradas', (string) ($kpis['queue_total'] ?? 0)]);
+        csvWriteRow($output, ['Registros clinicos', (string) ($kpis['records_total'] ?? 0)]);
+        csvWriteRow($output, ['Usuarios ativos', (string) ($kpis['active_users'] ?? 0)]);
+        csvWriteRow($output, []);
+        csvWriteRow($output, ['Status do agendamento', 'Total']);
+        foreach ($appointmentsByStatus as $row) {
+            csvWriteRow($output, [(string) $row['status'], (string) $row['total']]);
         }
 
-        fputcsv($output, ['Clinix', 'Relatorio Executivo']);
-        fputcsv($output, ['Período', $dateFrom . ' a ' . $dateTo]);
-        fputcsv($output, []);
-        fputcsv($output, ['KPI', 'Valor']);
-        fputcsv($output, ['Pacientes ativos', $kpis['active_patients'] ?? 0]);
-        fputcsv($output, ['Agendamentos', $kpis['appointments_total'] ?? 0]);
-        fputcsv($output, ['Senhas geradas', $kpis['queue_total'] ?? 0]);
-        fputcsv($output, ['Registros clinicos', $kpis['records_total'] ?? 0]);
-        fputcsv($output, ['Usuários ativos', $kpis['active_users'] ?? 0]);
-        fputcsv($output, []);
-        fputcsv($output, ['Status do agendamento', 'Total']);
-        foreach ($appointmentsByStatus as $row) {
-            fputcsv($output, [$row['status'], $row['total']]);
-        }
         fclose($output);
         exit;
     }
 }
-

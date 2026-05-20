@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/var/www/html/storage
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: clinix
+    ports:
+      - "3307:3306"
+    volumes:
+      - clinix_db:/var/lib/mysql
+
+volumes:
+  clinix_db:

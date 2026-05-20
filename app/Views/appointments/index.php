@@ -6,6 +6,7 @@
             <h2>Agenda</h2>
             <p class="muted">Gestao de consultas e fluxo de atendimento.</p>
         </div>
+        <a class="btn secondary small" style="width:auto;" href="<?= APP_URL ?>/?route=appointments.week">Visão semanal</a>
         <?php if (in_array((\App\Core\Auth::user()['role'] ?? ''), ['admin', 'reception'], true)): ?>
             <a class="btn small" style="width:auto;" href="<?= APP_URL ?>/?route=appointment.form">Novo agendamento</a>
         <?php endif; ?>

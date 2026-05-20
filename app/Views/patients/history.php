@@ -150,7 +150,7 @@ $consents = $consents ?? [];
                     <div style="margin:8px 0;">
                         <strong>Anexos:</strong>
                         <?php foreach ($recordDocs as $doc): ?>
-                            <div><a class="link" target="_blank" href="<?= APP_URL . '/' . e($doc['file_path']) ?>"><?= e($doc['original_name']) ?></a> <small class="muted">(<?= e(number_format(((int) $doc['file_size']) / 1024, 1, ',', '.')) ?> KB)</small></div>
+                            <div><a class="link" href="<?= APP_URL ?>/?route=record.document&id=<?= (int) $doc['id'] ?>"><?= e($doc['original_name']) ?></a> <small class="muted">(<?= e(number_format(((int) $doc['file_size']) / 1024, 1, ',', '.')) ?> KB)</small></div>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>

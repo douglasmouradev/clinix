@@ -128,6 +128,25 @@ function formatDateTimeBr(?string $dateTime): string
     return date('d/m/Y H:i', $timestamp);
 }
 
+function wantsJson(): bool
+{
+    $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
+    if (str_contains($accept, 'application/json')) {
+        return true;
+    }
+
+    return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+        && strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
+function jsonResponse(array $data, int $status = 200): void
+{
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 function cacheRemember(string $key, int $ttlSeconds, callable $resolver): mixed
 {
     $dir = __DIR__ . '/../storage/cache';
@@ -156,5 +175,35 @@ function cacheRemember(string $key, int $ttlSeconds, callable $resolver): mixed
         @file_put_contents($file, $content, LOCK_EX);
     }
     return $payload;
+}
+
+/**
+ * Inicia download CSV limpo (sem warnings no output) com BOM para Excel.
+ *
+ * @return resource
+ */
+function csvBeginDownload(string $filename)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+    $output = fopen('php://output', 'wb');
+    if ($output === false) {
+        exit;
+    }
+
+    fwrite($output, "\xEF\xBB\xBF");
+
+    return $output;
+}
+
+/** @param resource $handle */
+function csvWriteRow($handle, array $fields): void
+{
+    fputcsv($handle, $fields, ',', '"', '\\');
 }
 

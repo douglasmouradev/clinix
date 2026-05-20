@@ -10,7 +10,13 @@
 
 <div class="card">
     <label>URL atual do painel</label>
-    <input readonly value="<?= e(APP_URL . '/?route=queue.panel&token=' . $panelToken) ?>">
+    <?php
+    $panelUrl = APP_URL . '/?route=queue.panel&token=' . rawurlencode($panelToken);
+    if (!empty($tenantSlug)) {
+        $panelUrl .= '&tenant=' . rawurlencode($tenantSlug);
+    }
+    ?>
+    <input readonly value="<?= e($panelUrl) ?>">
     <p class="muted" style="margin-top:8px;">Compartilhe esta URL apenas com dispositivos autorizados.</p>
 
     <form method="post" action="<?= APP_URL ?>/?route=admin.panel.rotate" style="margin-top:12px;">
