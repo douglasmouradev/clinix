@@ -7,7 +7,7 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html
 
-RUN mkdir -p storage/logs storage/cache storage/uploads \
+RUN mkdir -p storage/logs storage/cache storage/uploads public/uploads \
     && chown -R www-data:www-data storage public/uploads
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
