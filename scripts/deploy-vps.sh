@@ -63,10 +63,16 @@ if [[ "${DB_HAS_TABLES}" == "0" ]]; then
     echo "==> Importando schema inicial"
     docker compose -f "${COMPOSE_FILE}" exec -T db \
         mysql -u"${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" < database/schema.sql
+    echo "==> Registrando migrations já cobertas pelo schema.sql"
+    docker compose -f "${COMPOSE_FILE}" exec -T app php database/bootstrap-after-schema.php
 fi
 
 echo "==> Migrations"
-docker compose -f "${COMPOSE_FILE}" exec -T app php database/migrate.php
+if ! docker compose -f "${COMPOSE_FILE}" exec -T app php database/migrate.php; then
+    echo "Aviso: migrate retornou erro. Se o schema já existia, rode:"
+    echo "  docker compose -f ${COMPOSE_FILE} exec -T app php database/bootstrap-after-schema.php"
+    echo "  docker compose -f ${COMPOSE_FILE} exec -T app php database/migrate.php"
+fi
 
 echo ""
 echo "Deploy concluído."
