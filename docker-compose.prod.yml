@@ -10,6 +10,8 @@ services:
     environment:
       DB_HOST: db
     volumes:
+      # Código do host (git pull atualiza sem rebuild)
+      - .:/var/www/html
       - ./storage:/var/www/html/storage
     depends_on:
       db:

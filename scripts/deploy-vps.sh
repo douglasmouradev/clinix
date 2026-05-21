@@ -63,15 +63,20 @@ if [[ "${DB_HAS_TABLES}" == "0" ]]; then
     echo "==> Importando schema inicial"
     docker compose -f "${COMPOSE_FILE}" exec -T db \
         mysql -u"${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" < database/schema.sql
-    echo "==> Registrando migrations já cobertas pelo schema.sql"
-    docker compose -f "${COMPOSE_FILE}" exec -T app php database/bootstrap-after-schema.php
 fi
+
+echo "==> Marcando migrations legadas (schema.sql já inclui tenant_id)"
+for f in database/migrations/20260505*.sql; do
+    [[ -f "$f" ]] || continue
+    fn=$(basename "$f")
+    docker compose -f "${COMPOSE_FILE}" exec -T db \
+        mysql -u"${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" \
+        -e "INSERT IGNORE INTO migrations (filename) VALUES ('${fn}');" 2>/dev/null || true
+done
 
 echo "==> Migrations"
 if ! docker compose -f "${COMPOSE_FILE}" exec -T app php database/migrate.php; then
-    echo "Aviso: migrate retornou erro. Se o schema já existia, rode:"
-    echo "  docker compose -f ${COMPOSE_FILE} exec -T app php database/bootstrap-after-schema.php"
-    echo "  docker compose -f ${COMPOSE_FILE} exec -T app php database/migrate.php"
+    echo "Aviso: migrate falhou. Rode: ./scripts/fix-migrations-vps.sh"
 fi
 
 echo ""
