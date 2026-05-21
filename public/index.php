@@ -12,6 +12,11 @@ if (!is_dir($logDir)) {
 ini_set('log_errors', '1');
 ini_set('error_log', $logDir . '/app.log');
 error_reporting(E_ALL);
+if (APP_ENV === 'production') {
+    ini_set('display_errors', '0');
+} else {
+    ini_set('display_errors', '1');
+}
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';

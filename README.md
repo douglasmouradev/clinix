@@ -121,8 +121,20 @@ curl "http://localhost:8000/?route=cron.retention&secret=SEU_CRON_SECRET"
 - Usuários: `admin`, `recepção`, `enfermeira`, `médico`
 - Senha inicial: `ChangeMe2026!` (troca obrigatória no primeiro login)
 
-## Produção
+## Produção (VPS)
 
-- Use `public/router.php` no servidor built-in ou Apache/Nginx apontando para `public/`
-- Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CRON_SECRET`, `APP_URL`, `MAIL_FROM` / `SMTP_*`
+Deploy com Docker na sua VPS (ex.: `62.72.63.161`):
+
+```bash
+cp .env.production.example .env
+# edite senhas e APP_URL
+chmod +x scripts/deploy-vps.sh
+./scripts/deploy-vps.sh
+```
+
+Guia completo: [docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)
+
+- `docker compose -f docker-compose.prod.yml up -d`
+- Configure `STRIPE_*`, `CRON_SECRET`, `APP_URL`, SMTP
+- HTTPS: Nginx + Certbot na frente do container (ver guia)
 - Não exponha `storage/` nem `public/uploads/` diretamente

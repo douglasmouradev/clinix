@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+!.env.production.example
+vendor
+storage/logs/*
+storage/cache/*
+storage/uploads/*
+storage/backups/*
+.phpunit.result.cache
+acessos
+tests
+composer.lock
+README.md
+docs
