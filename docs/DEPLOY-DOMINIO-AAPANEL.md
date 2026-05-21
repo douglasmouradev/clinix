@@ -100,6 +100,23 @@ APP_HTTP_PORT=8080
 
 O aaPanel/Nginx fica na **80/443**; o Clinix só na **8080** com reverse proxy.
 
+## MySQL não inicia (`mysqlx-bind-address`)
+
+Se o log mostrar:
+
+`unknown variable 'mysqlx-bind-address=127.0.0.1'`
+
+No terminal:
+
+```bash
+grep -r mysqlx-bind-address /etc/my.cnf /www/server/mysql/ 2>/dev/null
+# Comente a linha no arquivo encontrado, ex.:
+sed -i 's/^mysqlx-bind-address/#mysqlx-bind-address/' /etc/my.cnf
+/etc/init.d/mysqld start
+```
+
+Ou use: `./scripts/fix-mysql-mysqlx-aapanel.sh`
+
 ## Problemas comuns
 
 | Sintoma | Solução |
