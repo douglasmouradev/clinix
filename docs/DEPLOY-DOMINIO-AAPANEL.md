@@ -124,6 +124,7 @@ Ou use: `./scripts/fix-mysql-mysqlx-aapanel.sh`
 | **Nenhum site carrega** | Docker na 80 → mude para 8080 e `bt reload` / reinicie nginx |
 | 502 Bad Gateway | Container parado ou porta errada (`docker ps`, teste `curl 127.0.0.1:8080`) |
 | Página do aaPanel / vazio | Falta reverse proxy |
+| **clinix abre o Baba PRO** | Docker parado e/ou `root` em vez de `proxy_pass :8080` → `./scripts/fix-clinix-vhost-aapanel.sh` |
 | SSL não emite | DNS A record ainda não apontou para o IP |
 | Login perde sessão | `APP_URL` deve ser `https://` com o domínio exato |
 
