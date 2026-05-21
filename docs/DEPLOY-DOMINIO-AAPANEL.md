@@ -88,10 +88,23 @@ Painel TV (token no admin):
 
 `https://clinix.tdesksolutions.com.br/?route=queue.panel&tenant=clinica-demo&token=SEU_TOKEN`
 
+## IMPORTANTE: não use a porta 80 no Docker
+
+Se `APP_HTTP_PORT=80`, o container Clinix **toma a porta 80** e o **aaPanel para de servir todos os sites** (`babapro`, `rezult`, etc.).
+
+Sempre use:
+
+```env
+APP_HTTP_PORT=8080
+```
+
+O aaPanel/Nginx fica na **80/443**; o Clinix só na **8080** com reverse proxy.
+
 ## Problemas comuns
 
 | Sintoma | Solução |
 |---------|---------|
+| **Nenhum site carrega** | Docker na 80 → mude para 8080 e `bt reload` / reinicie nginx |
 | 502 Bad Gateway | Container parado ou porta errada (`docker ps`, teste `curl 127.0.0.1:8080`) |
 | Página do aaPanel / vazio | Falta reverse proxy |
 | SSL não emite | DNS A record ainda não apontou para o IP |
