@@ -7,6 +7,26 @@ function e(string $value): string
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
+/** HTTPS visto pelo cliente (inclui reverse proxy aaPanel/Nginx). */
+function requestIsHttps(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+
+    $proto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+    if ($proto === 'https') {
+        return true;
+    }
+
+    $forwarded = (string) ($_SERVER['HTTP_FORWARDED'] ?? '');
+    if ($forwarded !== '' && preg_match('/proto=https/i', $forwarded) === 1) {
+        return true;
+    }
+
+    return false;
+}
+
 function redirect(string $path): void
 {
     header('Location: ' . APP_URL . $path);
