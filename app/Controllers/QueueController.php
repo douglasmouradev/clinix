@@ -252,6 +252,24 @@ final class QueueController
         $this->redirectKioskPrint((int) $issued['ticket']['id'], $tenantSlug, $issued['reused']);
     }
 
+    public function kioskPriority(): void
+    {
+        if (!$this->authorizeKiosk()) {
+            http_response_code(403);
+            echo 'Acesso negado ao totem.';
+            exit;
+        }
+
+        $tenantSlug = trim((string) ($_POST['tenant'] ?? $_GET['tenant'] ?? ''));
+        $patientId = (new Patient())->priorityPatientId();
+        $issued = $this->issueKioskTicket($patientId, 'Prioritário');
+        if ($issued['ticket'] === null) {
+            $this->redirectKioskError('Não foi possível gerar a senha. Tente novamente.', $tenantSlug, false);
+        }
+
+        $this->redirectKioskPrint((int) $issued['ticket']['id'], $tenantSlug, $issued['reused']);
+    }
+
     public function kioskTicketPrint(): void
     {
         if (!$this->authorizeKiosk()) {
@@ -357,7 +375,7 @@ final class QueueController
     private function issueKioskTicket(int $patientId, string $kind, ?int $appointmentId = null): array
     {
         $queue = new Queue();
-        if ($kind !== 'Sem agendamento') {
+        if (!in_array($kind, ['Sem agendamento', 'Prioritário'], true)) {
             $existing = $queue->findWaitingToday($patientId);
             if ($existing !== null) {
                 return ['ticket' => $existing, 'reused' => true];
@@ -421,8 +439,13 @@ final class QueueController
         $clinicName = (string) ($tenant['name'] ?? APP_NAME);
         $ticketData = $this->serializeTicket($ticket);
         $patient = (new Patient())->find((int) $ticket['patient_id']);
-        if ($patient !== null && (new Patient())->isWalkInRecord($patient)) {
-            $ticketData['full_name'] = 'Senha avulsa';
+        if ($patient !== null) {
+            $patientModel = new Patient();
+            if ($patientModel->isWalkInRecord($patient)) {
+                $ticketData['full_name'] = 'Senha avulsa';
+            } elseif ($patientModel->isPriorityRecord($patient)) {
+                $ticketData['full_name'] = 'Atendimento prioritário';
+            }
         }
 
         $appointmentTime = '';
@@ -479,6 +502,7 @@ final class QueueController
     private function ticketKindLabel(string $room): string
     {
         return match ($room) {
+            'Prioritário' => 'Atendimento prioritário',
             'Agendado' => 'Atendimento agendado',
             'Sem agendamento' => 'Sem agendamento',
             default => $room !== '' ? $room : 'Atendimento',

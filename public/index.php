@@ -53,6 +53,7 @@ $csrfExempt = [
     'cron.retention',
     'queue.kiosk.scheduled.submit',
     'queue.kiosk.walkin',
+    'queue.kiosk.priority',
 ];
 if ($httpMethod === 'POST' && !in_array($route, $csrfExempt, true)) {
     verifyCsrf();

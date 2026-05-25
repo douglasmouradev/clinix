@@ -45,6 +45,7 @@ final class Queue
     public static function ticketPrefixForRoom(?string $room): ?string
     {
         return match ($room) {
+            'Prioritário' => 'P',
             'Agendado' => 'A',
             'Sem agendamento' => 'B',
             default => null,
@@ -54,9 +55,10 @@ final class Queue
     public static function queuePriorityForRoom(?string $room): int
     {
         return match ($room) {
-            'Agendado' => 0,
-            'Sem agendamento' => 1,
-            default => 2,
+            'Prioritário' => 0,
+            'Agendado' => 1,
+            'Sem agendamento' => 2,
+            default => 3,
         };
     }
 
@@ -117,9 +119,10 @@ final class Queue
                     (qt.status = "called") DESC,
                     CASE WHEN qt.status = "called" THEN qt.called_at END DESC,
                     CASE
-                        WHEN qt.room = "Agendado" THEN 0
-                        WHEN qt.room = "Sem agendamento" THEN 1
-                        ELSE 2
+                        WHEN qt.room = "Prioritário" THEN 0
+                        WHEN qt.room = "Agendado" THEN 1
+                        WHEN qt.room = "Sem agendamento" THEN 2
+                        ELSE 3
                     END,
                     qt.id ASC';
         $stmt = Database::connection()->prepare($sql);

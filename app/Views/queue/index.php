@@ -4,9 +4,9 @@
     <div class="card" style="margin-bottom:16px;">
         <div class="card-title">
             <h3>Totem de autoatendimento</h3>
-            <span class="pill">Senhas A / B</span>
+            <span class="pill">Senhas P / A / B</span>
         </div>
-        <p class="muted">Abra no tablet em tela cheia. Agendados usam CPF; sem agendamento emite senha B na hora.</p>
+        <p class="muted">Abra no tablet em tela cheia. Prioritário (P), agendado com CPF (A) ou sem agendamento (B).</p>
         <div class="queue-kiosk-url-row">
             <input id="queue-kiosk-url" readonly value="<?= e($kioskUrl) ?>">
             <button type="button" class="btn secondary small" id="queue-kiosk-copy">Copiar URL</button>

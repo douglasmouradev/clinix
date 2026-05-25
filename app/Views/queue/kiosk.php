@@ -8,6 +8,7 @@
 $tenantParam = $tenantSlug !== '' ? ['tenant' => $tenantSlug] : [];
 $scheduledUrl = APP_URL . '/?' . http_build_query(['route' => 'queue.kiosk.scheduled', 'token' => $kioskToken] + $tenantParam);
 $walkInAction = APP_URL . '/?' . http_build_query(['route' => 'queue.kiosk.walkin', 'token' => $kioskToken] + $tenantParam);
+$priorityAction = APP_URL . '/?' . http_build_query(['route' => 'queue.kiosk.priority', 'token' => $kioskToken] + $tenantParam);
 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawurlencode($kioskUrl);
 ?>
 <!doctype html>
@@ -39,10 +40,20 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawu
                 <small>Informe seu CPF · senha <strong>A</strong></small>
             </a>
 
-            <form method="post" action="<?= e($walkInAction) ?>">
+            <form method="post" action="<?= e($priorityAction) ?>" class="kiosk-action-form">
                 <input type="hidden" name="token" value="<?= e($kioskToken) ?>">
                 <input type="hidden" name="tenant" value="<?= e($tenantSlug) ?>">
-                <button type="submit" class="kiosk-btn kiosk-btn-secondary" style="width:100%; min-height:200px;">
+                <button type="submit" class="kiosk-btn kiosk-btn-priority">
+                    <span class="kiosk-btn-icon" aria-hidden="true">⚡</span>
+                    <span>Atendimento prioritário</span>
+                    <small>Idoso, gestante, PCD, etc. · senha <strong>P</strong></small>
+                </button>
+            </form>
+
+            <form method="post" action="<?= e($walkInAction) ?>" class="kiosk-action-form">
+                <input type="hidden" name="token" value="<?= e($kioskToken) ?>">
+                <input type="hidden" name="tenant" value="<?= e($tenantSlug) ?>">
+                <button type="submit" class="kiosk-btn kiosk-btn-secondary">
                     <span class="kiosk-btn-icon" aria-hidden="true">🎫</span>
                     <span>Não tenho agendamento</span>
                     <small>Emitir senha na hora · senha <strong>B</strong></small>

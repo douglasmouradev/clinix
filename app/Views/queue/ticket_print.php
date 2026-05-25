@@ -32,7 +32,7 @@ $isKiosk = !empty($isKiosk);
         <?php if ($appointmentTime !== ''): ?>
             <p class="ticket-appointment">Horário agendado: <?= e($appointmentTime) ?></p>
         <?php endif; ?>
-        <?php if ((string) ($ticketData['room'] ?? '') !== '' && !in_array((string) $ticketData['room'], ['Agendado', 'Sem agendamento'], true)): ?>
+        <?php if ((string) ($ticketData['room'] ?? '') !== '' && !in_array((string) $ticketData['room'], ['Prioritário', 'Agendado', 'Sem agendamento'], true)): ?>
             <p class="ticket-room">Destino: <?= e((string) $ticketData['room']) ?></p>
         <?php endif; ?>
         <p class="ticket-date"><?= e((string) ($ticketData['created_label'] ?? '')) ?></p>

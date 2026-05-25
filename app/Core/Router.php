@@ -75,6 +75,7 @@ final class Router
             'queue.kiosk.scheduled' => ['class' => \App\Controllers\QueueController::class, 'method' => 'kioskScheduled', 'http' => ['GET'], 'public' => true],
             'queue.kiosk.scheduled.submit' => ['class' => \App\Controllers\QueueController::class, 'method' => 'kioskScheduledSubmit', 'http' => ['POST'], 'public' => true],
             'queue.kiosk.walkin' => ['class' => \App\Controllers\QueueController::class, 'method' => 'kioskWalkIn', 'http' => ['POST'], 'public' => true],
+            'queue.kiosk.priority' => ['class' => \App\Controllers\QueueController::class, 'method' => 'kioskPriority', 'http' => ['POST'], 'public' => true],
             'queue.kiosk.print' => ['class' => \App\Controllers\QueueController::class, 'method' => 'kioskTicketPrint', 'http' => ['GET'], 'public' => true],
             'queue.panel' => ['class' => \App\Controllers\QueueController::class, 'method' => 'panel', 'http' => ['GET'], 'public' => true],
             'queue.panel.data' => ['class' => \App\Controllers\QueueController::class, 'method' => 'panelData', 'http' => ['GET'], 'public' => true],

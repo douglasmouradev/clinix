@@ -44,7 +44,7 @@
         <button type="button" class="btn secondary small device-copy-btn" data-copy-target="kiosk-url">Copiar</button>
     </div>
     <p class="muted" style="margin-top:8px;">
-        Senhas <strong>A</strong> (agendado, CPF) e <strong>B</strong> (sem agendamento). Token separado do painel TV.
+        Senhas <strong>P</strong> (prioritário), <strong>A</strong> (agendado, CPF) e <strong>B</strong> (sem agendamento). Token separado do painel TV.
     </p>
     <p class="muted"><strong>Token:</strong> <code><?= e($kioskToken) ?></code></p>
 

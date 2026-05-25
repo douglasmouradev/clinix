@@ -92,7 +92,7 @@ Totem tablet (token separado no admin):
 
 `https://clinix.tdesksolutions.com.br/?route=queue.kiosk&tenant=clinica-demo&token=TOKEN_TOTEM`
 
-Senhas: **A001** (agendado, CPF) · **B001** (sem agendamento). A fila prioriza agendados.
+Senhas: **P001** (prioritário) · **A001** (agendado, CPF) · **B001** (sem agendamento). A fila prioriza P, depois A, depois B.
 
 ## Checklist pós-deploy
 

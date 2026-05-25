@@ -10,6 +10,7 @@ use App\Core\Database;
 final class Patient
 {
     public const WALK_IN_CPF = '00000000000';
+    public const PRIORITY_CPF = '00000000001';
 
     public function all(?string $search = null): array
     {
@@ -58,6 +59,11 @@ final class Patient
         return (string) ($patient['cpf'] ?? '') === self::WALK_IN_CPF;
     }
 
+    public function isPriorityRecord(array $patient): bool
+    {
+        return (string) ($patient['cpf'] ?? '') === self::PRIORITY_CPF;
+    }
+
     /** Paciente genérico para senhas sem agendamento (totem). */
     public function walkInPatientId(): int
     {
@@ -69,6 +75,27 @@ final class Patient
         return $this->create([
             'full_name' => 'Atendimento sem agendamento',
             'cpf' => self::WALK_IN_CPF,
+            'birth_date' => '2000-01-01',
+            'sex' => 'nao_informado',
+            'phone' => null,
+            'address' => null,
+            'medical_history' => null,
+            'lgpd_consent_at' => null,
+            'lgpd_consent_version' => null,
+        ]);
+    }
+
+    /** Paciente genérico para senhas prioritárias (totem). */
+    public function priorityPatientId(): int
+    {
+        $existing = $this->findByCpf(self::PRIORITY_CPF);
+        if ($existing !== null) {
+            return (int) $existing['id'];
+        }
+
+        return $this->create([
+            'full_name' => 'Atendimento prioritário',
+            'cpf' => self::PRIORITY_CPF,
             'birth_date' => '2000-01-01',
             'sex' => 'nao_informado',
             'phone' => null,
