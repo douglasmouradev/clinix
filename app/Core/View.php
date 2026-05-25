@@ -19,5 +19,17 @@ final class View
         require $viewPath;
         require __DIR__ . '/../Views/layouts/footer.php';
     }
+
+    /** Página sem menu (totem, impressão, etc.). */
+    public static function renderBare(string $view, array $data = []): void
+    {
+        extract($data, EXTR_SKIP);
+        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
+        if (!file_exists($viewPath)) {
+            throw new \RuntimeException('View não encontrada: ' . $view);
+        }
+
+        require $viewPath;
+    }
 }
 

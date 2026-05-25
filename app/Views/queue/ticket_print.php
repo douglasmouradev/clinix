@@ -1,6 +1,8 @@
 <?php
 /** @var array<string, mixed> $ticketData */
 /** @var string $clinicName */
+/** @var string $ticketKind */
+$ticketKind = $ticketKind ?? '';
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -13,6 +15,9 @@
     <article class="ticket-slip">
         <p class="ticket-clinic"><?= e($clinicName) ?></p>
         <p class="ticket-label">Senha de atendimento</p>
+        <?php if ($ticketKind !== ''): ?>
+            <p class="ticket-kind"><?= e($ticketKind) ?></p>
+        <?php endif; ?>
         <p class="ticket-number">#<?= e((string) $ticketData['ticket_number']) ?></p>
         <p class="ticket-patient"><?= e((string) $ticketData['full_name']) ?></p>
         <?php if ((string) ($ticketData['room'] ?? '') !== ''): ?>
@@ -22,7 +27,16 @@
         <p class="ticket-hint">Aguarde ser chamado no painel</p>
     </article>
     <script>
-        window.onafterprint = function () { window.close(); };
+        window.onafterprint = function () {
+            var params = new URLSearchParams(window.location.search);
+            var tenant = params.get('tenant') || '';
+            var token = params.get('token') || '';
+            var back = '<?= e(APP_URL) ?>/?route=queue.kiosk&token=' + encodeURIComponent(token);
+            if (tenant) {
+                back += '&tenant=' + encodeURIComponent(tenant);
+            }
+            window.location.replace(back);
+        };
     </script>
 </body>
 </html>

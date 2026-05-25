@@ -19,6 +19,16 @@
     <input readonly value="<?= e($panelUrl) ?>">
     <p class="muted" style="margin-top:8px;">Compartilhe esta URL apenas com dispositivos autorizados.</p>
 
+    <label style="margin-top:16px;display:block;">URL do totem (tablet)</label>
+    <?php
+    $kioskUrl = APP_URL . '/?route=queue.kiosk&token=' . rawurlencode($panelToken);
+    if (!empty($tenantSlug)) {
+        $kioskUrl .= '&tenant=' . rawurlencode($tenantSlug);
+    }
+    ?>
+    <input readonly value="<?= e($kioskUrl) ?>">
+    <p class="muted" style="margin-top:8px;">Abra esta URL em tela cheia no tablet. Opções: agendado (CPF) ou sem agendamento (senha na hora).</p>
+
     <form method="post" action="<?= APP_URL ?>/?route=admin.panel.rotate" style="margin-top:12px;">
         <?= csrfInput() ?>
         <button class="btn small" style="width:auto;">Rotacionar token do painel</button>

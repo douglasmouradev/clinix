@@ -1,0 +1,175 @@
+* {
+    box-sizing: border-box;
+}
+
+body.kiosk-body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Figtree", "Noto Sans", system-ui, sans-serif;
+    background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 55%, #0f766e 100%);
+    color: #f8fafc;
+}
+
+.kiosk-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.kiosk-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.kiosk-header h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+}
+
+.kiosk-header p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.kiosk-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    flex: 1;
+    align-content: center;
+}
+
+@media (min-width: 640px) {
+    .kiosk-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.kiosk-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 200px;
+    padding: 28px 20px;
+    border: none;
+    border-radius: 20px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.kiosk-btn:active {
+    transform: scale(0.98);
+}
+
+.kiosk-btn-primary {
+    background: #fff;
+    color: #1e3a8a;
+}
+
+.kiosk-btn-secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.kiosk-btn-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.kiosk-btn small {
+    font-size: 0.95rem;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.kiosk-form-card {
+    background: #fff;
+    color: #0f172a;
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.kiosk-form-card label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.kiosk-form-card input[type="text"] {
+    width: 100%;
+    font-size: 1.75rem;
+    padding: 16px 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+.kiosk-form-card input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+.kiosk-form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.kiosk-submit {
+    width: 100%;
+    min-height: 56px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    background: #1d4ed8;
+    color: #fff;
+    cursor: pointer;
+}
+
+.kiosk-back {
+    display: inline-block;
+    text-align: center;
+    color: #475569;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px;
+}
+
+.kiosk-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.kiosk-footer-hint {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.95rem;
+    opacity: 0.8;
+}

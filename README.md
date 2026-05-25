@@ -63,6 +63,13 @@ Sistema SaaS para clínicas de pequeno e médio porte, com autenticação por se
 - Histórico das últimas 5 chamadas no painel
 - URL: `/?route=queue.panel&tenant=SLUG&token=TOKEN` (ver Admin → Token do painel)
 
+## Totem (tablet)
+
+- URL: `/?route=queue.kiosk&tenant=SLUG&token=TOKEN` (mesmo token do painel; ver Admin → Token do painel)
+- **Atendimento agendado:** informa CPF, valida agendamento do dia e imprime senha
+- **Não tenho agendamento:** emite senha na hora (fila avulsa)
+- Após imprimir, volta automaticamente à tela inicial do totem
+
 ## Administração
 
 - Dashboard com KPIs (pacientes, fila, consultas do dia)

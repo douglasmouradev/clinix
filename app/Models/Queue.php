@@ -29,6 +29,40 @@ final class Queue
         return $this->findTicket((int) $conn->lastInsertId());
     }
 
+    public function findWaitingToday(int $patientId): ?array
+    {
+        $sql = 'SELECT qt.*, p.full_name FROM queue_tickets qt
+                INNER JOIN patients p ON p.id = qt.patient_id
+                WHERE qt.patient_id = :patient_id
+                  AND qt.tenant_id = :tenant_id
+                  AND qt.status = "waiting"
+                  AND DATE(qt.created_at) = CURDATE()
+                ORDER BY qt.id DESC
+                LIMIT 1';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['patient_id' => $patientId, 'tenant_id' => tenantId()]);
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function kioskActorUserId(): int
+    {
+        $sql = 'SELECT id FROM users
+                WHERE tenant_id = :tenant_id AND is_active = 1
+                ORDER BY FIELD(role, "reception", "admin", "nurse", "doctor")
+                LIMIT 1';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId()]);
+        $id = (int) $stmt->fetchColumn();
+
+        if ($id <= 0) {
+            throw new \RuntimeException('Nenhum usuário ativo para registrar senhas no totem.');
+        }
+
+        return $id;
+    }
+
     public function findTicket(int $id): ?array
     {
         $sql = 'SELECT qt.*, p.full_name FROM queue_tickets qt

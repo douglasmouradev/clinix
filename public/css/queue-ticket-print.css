@@ -34,6 +34,13 @@ body.ticket-print-body {
     letter-spacing: 0.08em;
 }
 
+.ticket-kind {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e40af;
+}
+
 .ticket-number {
     margin: 8px 0 10px;
     font-size: 42px;

@@ -13,8 +13,8 @@ fi
 # shellcheck disable=SC1091
 set -a && source .env && set +a
 
-if grep -q '^APP_HTTP_PORT=80' .env 2>/dev/null; then
-    sed -i.bak 's/^APP_HTTP_PORT=80/APP_HTTP_PORT=8080/' .env
+if grep -qE '^APP_HTTP_PORT=80$' .env 2>/dev/null; then
+    sed -i.bak 's/^APP_HTTP_PORT=80$/APP_HTTP_PORT=8080/' .env
     rm -f .env.bak
     echo "APP_HTTP_PORT alterado de 80 para 8080 no .env"
 elif ! grep -q '^APP_HTTP_PORT=' .env; then

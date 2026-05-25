@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Core\CpfValidator;
 use App\Core\Database;
 
 final class Patient
@@ -32,6 +33,44 @@ final class Patient
         $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
         $patient = $stmt->fetch();
         return $patient ?: null;
+    }
+
+    public function findByCpf(string $cpf): ?array
+    {
+        $cpf = CpfValidator::normalize($cpf);
+        if (strlen($cpf) !== 11) {
+            return null;
+        }
+
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM patients WHERE cpf = :cpf AND tenant_id = :tenant_id AND anonymized_at IS NULL LIMIT 1'
+        );
+        $stmt->execute(['cpf' => $cpf, 'tenant_id' => tenantId()]);
+        $patient = $stmt->fetch();
+
+        return $patient ?: null;
+    }
+
+    /** Paciente genérico para senhas sem agendamento (totem). */
+    public function walkInPatientId(): int
+    {
+        $walkInCpf = '00000000000';
+        $existing = $this->findByCpf($walkInCpf);
+        if ($existing !== null) {
+            return (int) $existing['id'];
+        }
+
+        return $this->create([
+            'full_name' => 'Atendimento sem agendamento',
+            'cpf' => $walkInCpf,
+            'birth_date' => '2000-01-01',
+            'sex' => 'nao_informado',
+            'phone' => null,
+            'address' => null,
+            'medical_history' => null,
+            'lgpd_consent_at' => null,
+            'lgpd_consent_version' => null,
+        ]);
     }
 
     public function create(array $data): int

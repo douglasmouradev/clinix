@@ -14,7 +14,6 @@ if (is_file($envFile)) {
             [$key, $value] = array_map('trim', explode('=', $line, 2));
             if ($key !== '') {
                 $_ENV[$key] = $value;
-                putenv($key . '=' . $value);
             }
         }
     }
@@ -22,6 +21,10 @@ if (is_file($envFile)) {
 
 function envValue(string $key, string $default): string
 {
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+        return (string) $_ENV[$key];
+    }
+
     $value = getenv($key);
     if ($value === false || $value === '') {
         return $default;
@@ -30,8 +33,34 @@ function envValue(string $key, string $default): string
     return $value;
 }
 
+function resolveAppUrl(): string
+{
+    $configured = envValue('APP_URL', 'http://localhost:8000');
+
+    if (PHP_SAPI === 'cli' || !isset($_SERVER['HTTP_HOST'])) {
+        return $configured;
+    }
+
+    $host = trim((string) $_SERVER['HTTP_HOST']);
+    if ($host === '') {
+        return $configured;
+    }
+
+    $isLocalConfig = str_contains($configured, 'localhost')
+        || str_contains($configured, '127.0.0.1');
+
+    if (!$isLocalConfig) {
+        return $configured;
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+
+    return ($https ? 'https' : 'http') . '://' . $host;
+}
+
 define('APP_NAME', envValue('APP_NAME', 'Clinix'));
-define('APP_URL', envValue('APP_URL', 'http://localhost:8000'));
+define('APP_URL', resolveAppUrl());
 define('DB_HOST', envValue('DB_HOST', '127.0.0.1'));
 define('DB_PORT', (int) envValue('DB_PORT', '3306'));
 define('DB_NAME', envValue('DB_NAME', 'clinix'));
