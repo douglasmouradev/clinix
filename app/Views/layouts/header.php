@@ -11,6 +11,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(APP_NAME) ?></title>
+    <link rel="icon" type="image/png" href="<?= APP_URL ?>/img/clinix-logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,7 +21,10 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
 <body>
 <header class="topbar">
     <div class="topbar-inner">
-    <a class="brand" href="<?= APP_URL ?>/?route=dashboard"><?= e(APP_NAME) ?></a>
+    <a class="brand" href="<?= APP_URL ?>/?route=dashboard">
+        <img src="<?= APP_URL ?>/img/clinix-logo.png" alt="" width="120" height="36" class="brand-logo">
+        <span class="sr-only"><?= e(APP_NAME) ?></span>
+    </a>
     <?php if ($user): ?>
         <nav class="menu">
             <a class="<?= $currentRoute === 'dashboard' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=dashboard">Inicio</a>

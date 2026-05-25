@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="public/img/clinix-logo.png" alt="Clinix" width="280"/>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP"/>
   <img src="https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL"/>
   <img src="https://img.shields.io/badge/SaaS-Multi--tenant-0ea5e9?style=flat-square" alt="SaaS"/>

@@ -1,6 +1,7 @@
 <div class="login-shell">
     <div class="login-wrap">
         <section class="login-hero">
+            <img src="<?= APP_URL ?>/img/clinix-logo.png" alt="Clinix" class="login-hero-logo" width="200" height="60">
             <h2>Clinix</h2>
             <p>Gestao inteligente para equipes de atendimento clinico.</p>
             <div class="hero-list">
