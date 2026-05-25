@@ -48,7 +48,12 @@ if (!in_array($route, \App\Core\Router::publicRoutes(), true)) {
     \App\Core\Auth::enforceSessionSecurity();
 }
 
-$csrfExempt = ['billing.webhook', 'cron.retention'];
+$csrfExempt = [
+    'billing.webhook',
+    'cron.retention',
+    'queue.kiosk.scheduled.submit',
+    'queue.kiosk.walkin',
+];
 if ($httpMethod === 'POST' && !in_array($route, $csrfExempt, true)) {
     verifyCsrf();
 }
