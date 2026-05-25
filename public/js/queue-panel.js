@@ -6,6 +6,7 @@
     var lastRevision = config.initial ? (config.initial.revision || 'idle') : null;
     var pollTimer = null;
     var polling = false;
+    var hideNames = config.hideNames === true;
 
     if (!contentEl) {
         return;
@@ -17,6 +18,13 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+    }
+
+    function displayName(name) {
+        if (hideNames && name) {
+            return 'Paciente';
+        }
+        return name;
     }
 
     function beep() {
@@ -62,12 +70,15 @@
             cardClass += ' is-new';
         }
         var label = isLive ? 'Senha chamada agora' : 'Última chamada';
+        var nameHtml = hideNames
+            ? ''
+            : '<p class="panel-call-name">' + escapeHtml(displayName(called.full_name)) + '</p>';
 
         contentEl.innerHTML =
             '<div class="' + cardClass + '">' +
             '<p class="panel-call-label">' + label + '</p>' +
             '<h1 class="panel-call-number">#' + escapeHtml(called.ticket_number) + '</h1>' +
-            '<p class="panel-call-name">' + escapeHtml(called.full_name) + '</p>' +
+            nameHtml +
             '<p class="panel-call-room">Dirija-se a: <strong>' + escapeHtml(called.room || 'A definir') + '</strong></p></div>';
 
         if (isNew) {
@@ -87,18 +98,21 @@
         }
         if (!recent || !recent.length) {
             recentEl.innerHTML =
-                '<h3>Últimas pessoas chamadas</h3>' +
-                '<p class="muted panel-recent-empty">Nenhuma chamada registrada hoje.</p>';
+                '<h3>Últimas chamadas</h3>' +
+                '<p class="panel-recent-empty">Nenhuma chamada registrada hoje.</p>';
             return;
         }
 
-        var html = '<h3>Últimas pessoas chamadas</h3><ul class="panel-recent-list">';
+        var html = '<h3>Últimas chamadas</h3><ul class="panel-recent-list">';
         recent.forEach(function (item) {
             var time = item.time_label ? ' · ' + escapeHtml(item.time_label) : '';
+            var nameHtml = hideNames
+                ? ''
+                : '<span class="panel-recent-name">' + escapeHtml(displayName(item.full_name)) + '</span>';
             html +=
                 '<li class="panel-recent-item">' +
                 '<span class="panel-recent-number">#' + escapeHtml(item.ticket_number) + '</span>' +
-                '<span class="panel-recent-name">' + escapeHtml(item.full_name) + '</span>' +
+                nameHtml +
                 '<span class="panel-recent-meta">' + escapeHtml(item.room || '-') + time + '</span>' +
                 '</li>';
         });
@@ -142,7 +156,7 @@
             .catch(function () {
                 if (lastRevision === null && contentEl) {
                     contentEl.innerHTML =
-                        '<p class="error">Não foi possível atualizar o painel. Recarregue a página ou use a URL em Admin → Token do painel.</p>';
+                        '<p class="error">Não foi possível atualizar o painel. Recarregue a página.</p>';
                 }
             })
             .finally(function () {
@@ -151,14 +165,46 @@
     }
 
     function startPolling() {
+        if (pollTimer) {
+            window.clearInterval(pollTimer);
+        }
         var ms = config.pollMs || 4000;
         pollTimer = window.setInterval(poll, ms);
+    }
+
+    function startSse() {
+        if (!config.streamUrl || typeof EventSource === 'undefined') {
+            startPolling();
+            return;
+        }
+
+        try {
+            var es = new EventSource(config.streamUrl);
+            es.addEventListener('update', function (event) {
+                try {
+                    applyPayload(JSON.parse(event.data), true);
+                } catch (e) {
+                    /* ignore */
+                }
+            });
+            es.onerror = function () {
+                es.close();
+                startPolling();
+            };
+        } catch (e) {
+            startPolling();
+        }
     }
 
     if (config.initial) {
         applyPayload(config.initial, false);
     }
 
-    startPolling();
+    if (config.useSse) {
+        startSse();
+    } else {
+        startPolling();
+    }
+
     window.setTimeout(poll, 1500);
 })();

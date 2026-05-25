@@ -21,5 +21,10 @@ foreach ($dirs as $dir) {
 echo "==> DB migrations"
 php database/migrate.php >/dev/null
 
+if [[ -f vendor/bin/phpunit ]]; then
+    echo "==> PHPUnit"
+    ./vendor/bin/phpunit
+fi
+
 echo "Quality check concluido."
 

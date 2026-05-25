@@ -3,8 +3,18 @@
     var flashEl = document.getElementById('queue-flash');
     var tableBody = document.getElementById('queue-table-body');
     var countPill = document.getElementById('queue-count-pill');
+    var syncEl = document.getElementById('queue-sync-label');
     var callSelect = document.getElementById('queue-call-select');
     var callRoom = document.getElementById('queue-call-room');
+    var pollTimer = null;
+    var polling = false;
+    var lastSyncAt = null;
+
+    var statusLabels = {
+        waiting: 'Aguardando',
+        called: 'Chamado',
+        done: 'Finalizado',
+    };
 
     function showFlash(type, message) {
         if (!flashEl) {
@@ -26,8 +36,24 @@
             .replace(/"/g, '&quot;');
     }
 
-    function statusLabel(status) {
-        return status;
+    function statusLabel(ticket) {
+        return ticket.status_label || statusLabels[ticket.status] || ticket.status;
+    }
+
+    function setBusy(button, busy) {
+        if (!button) {
+            return;
+        }
+        button.disabled = busy;
+        button.setAttribute('aria-busy', busy ? 'true' : 'false');
+    }
+
+    function updateSyncLabel() {
+        if (!syncEl || !lastSyncAt) {
+            return;
+        }
+        var secs = Math.max(0, Math.floor((Date.now() - lastSyncAt) / 1000));
+        syncEl.textContent = 'Atualizado há ' + secs + ' s';
     }
 
     function renderRows(queue) {
@@ -36,7 +62,10 @@
         }
 
         if (!queue.length) {
-            tableBody.innerHTML = '<tr><td colspan="5">Nenhuma senha na fila.</td></tr>';
+            tableBody.innerHTML =
+                '<tr><td colspan="5" class="empty-state-cell">' +
+                '<p class="empty-state-title">Nenhuma senha na fila</p>' +
+                '<p class="empty-state-hint">Gere uma senha na recepção ou aguarde o totem.</p></td></tr>';
             if (countPill) {
                 countPill.textContent = '0 na fila';
             }
@@ -54,7 +83,7 @@
             html += '<tr data-ticket-id="' + ticket.id + '">' +
                 '<td>#' + escapeHtml(ticket.ticket_number) + '</td>' +
                 '<td>' + escapeHtml(ticket.full_name) + '</td>' +
-                '<td>' + escapeHtml(statusLabel(ticket.status)) + '</td>' +
+                '<td>' + escapeHtml(statusLabel(ticket)) + '</td>' +
                 '<td>' + escapeHtml(ticket.room || '-') + '</td>' +
                 '<td class="queue-actions">';
 
@@ -117,14 +146,42 @@
         });
     }
 
+    function applyQueueData(data) {
+        if (!data || !data.ok) {
+            return;
+        }
+        renderRows(data.queue || []);
+        lastSyncAt = Date.now();
+        updateSyncLabel();
+    }
+
+    function pollQueue() {
+        if (!config.dataUrl || polling) {
+            return;
+        }
+        polling = true;
+        fetch(config.dataUrl, {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store',
+        })
+            .then(function (r) {
+                return r.json();
+            })
+            .then(applyQueueData)
+            .catch(function () {
+                /* silencioso */
+            })
+            .finally(function () {
+                polling = false;
+            });
+    }
+
     function callTicket(ticketId, room, button) {
         var row = button ? button.closest('tr') : null;
         if (row) {
             row.classList.add('queue-row-calling');
         }
-        if (button) {
-            button.disabled = true;
-        }
+        setBusy(button, true);
 
         return postQueue('queue.call', {
             ticket_id: String(ticketId),
@@ -135,7 +192,7 @@
                     throw new Error(result.data.message || 'Não foi possível chamar a senha.');
                 }
                 showFlash('success', result.data.message || 'Paciente chamado.');
-                renderRows(result.data.queue || []);
+                applyQueueData(result.data);
                 return result.data;
             })
             .catch(function (error) {
@@ -145,16 +202,12 @@
                 if (row) {
                     row.classList.remove('queue-row-calling');
                 }
-                if (button) {
-                    button.disabled = false;
-                }
+                setBusy(button, false);
             });
     }
 
     function doneTicket(ticketId, button) {
-        if (button) {
-            button.disabled = true;
-        }
+        setBusy(button, true);
 
         return postQueue('queue.done', { ticket_id: String(ticketId) })
             .then(function (result) {
@@ -162,15 +215,33 @@
                     throw new Error(result.data.message || 'Não foi possível finalizar.');
                 }
                 showFlash('success', result.data.message || 'Atendimento finalizado.');
-                renderRows(result.data.queue || []);
+                applyQueueData(result.data);
             })
             .catch(function (error) {
                 showFlash('error', error.message || 'Erro ao finalizar.');
             })
             .finally(function () {
-                if (button) {
-                    button.disabled = false;
+                setBusy(button, false);
+            });
+    }
+
+    function callNext(button) {
+        setBusy(button, true);
+        var nextRoom = document.getElementById('queue-next-room');
+        var room = (nextRoom && nextRoom.value) || (callRoom && callRoom.value) || config.defaultRoom;
+        return postQueue('queue.call.next', { room: room || config.defaultRoom || 'Triagem' })
+            .then(function (result) {
+                if (!result.ok || !result.data.ok) {
+                    throw new Error(result.data.message || 'Nenhuma senha aguardando.');
                 }
+                showFlash('success', result.data.message || 'Próxima senha chamada.');
+                applyQueueData(result.data);
+            })
+            .catch(function (error) {
+                showFlash('error', error.message || 'Erro ao chamar próxima senha.');
+            })
+            .finally(function () {
+                setBusy(button, false);
             });
     }
 
@@ -208,9 +279,7 @@
 
             var route = action === 'generate' ? 'queue.generate' : 'queue.call';
             var submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-            }
+            setBusy(submitBtn, true);
 
             postQueue(route, payload)
                 .then(function (result) {
@@ -218,7 +287,7 @@
                         throw new Error(result.data.message || 'Operação não concluída.');
                     }
                     showFlash('success', result.data.message || 'Concluído.');
-                    renderRows(result.data.queue || []);
+                    applyQueueData(result.data);
                     if (action === 'generate') {
                         var autoPrint = document.getElementById('queue-auto-print');
                         if (result.data.ticket && (!autoPrint || autoPrint.checked)) {
@@ -234,12 +303,17 @@
                     showFlash('error', error.message || 'Erro na operação.');
                 })
                 .finally(function () {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                    }
+                    setBusy(submitBtn, false);
                 });
         });
     });
+
+    var callNextBtn = document.getElementById('queue-call-next-btn');
+    if (callNextBtn) {
+        callNextBtn.addEventListener('click', function () {
+            callNext(callNextBtn);
+        });
+    }
 
     if (callSelect && callRoom) {
         callSelect.addEventListener('change', function () {
@@ -252,4 +326,10 @@
     }
 
     bindActionButtons();
+
+    if (config.dataUrl) {
+        pollTimer = window.setInterval(pollQueue, config.pollMs || 4000);
+        window.setInterval(updateSyncLabel, 1000);
+        window.setTimeout(pollQueue, 1200);
+    }
 })();

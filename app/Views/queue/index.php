@@ -41,6 +41,18 @@
         </div>
     <?php endif; ?>
 
+    <?php if (in_array($role, ['admin', 'reception', 'nurse', 'doctor'], true)): ?>
+        <div class="card">
+            <h3>Chamar próximo da fila</h3>
+            <p class="muted">Respeita prioridade P → A → B.</p>
+            <label class="queue-field-label">Sala ou destino</label>
+            <input name="room" id="queue-next-room" value="<?= $role === 'reception' ? 'Recepção' : 'Triagem' ?>">
+            <div class="queue-form-actions">
+                <button type="button" class="btn" id="queue-call-next-btn">Chamar próximo</button>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <?php if (in_array($role, ['admin', 'nurse', 'doctor'], true)): ?>
         <div class="card">
             <h3>Chamar paciente</h3>
@@ -71,6 +83,7 @@
     <div class="card-title">
         <h3>Fila atual</h3>
         <span class="pill" id="queue-count-pill"><?= count($queue) ?> na fila</span>
+        <span class="muted" id="queue-sync-label" style="font-size:13px;"></span>
     </div>
     <div class="table-wrap">
         <table>
@@ -172,6 +185,8 @@
 <script>
     window.CLINIX_QUEUE = {
         appUrl: <?= json_encode(APP_URL, JSON_UNESCAPED_UNICODE) ?>,
+        dataUrl: <?= json_encode($queueDataUrl ?? '', JSON_UNESCAPED_UNICODE) ?>,
+        pollMs: 4000,
         csrfToken: <?= json_encode($csrfToken ?? csrfToken(), JSON_UNESCAPED_UNICODE) ?>,
         role: <?= json_encode($role, JSON_UNESCAPED_UNICODE) ?>,
         clinicName: <?= json_encode($clinicName ?? APP_NAME, JSON_UNESCAPED_UNICODE) ?>,
@@ -181,4 +196,4 @@
         defaultRoom: <?= json_encode($role === 'reception' ? 'Recepção' : ($role === 'nurse' ? 'Triagem' : 'Triagem'), JSON_UNESCAPED_UNICODE) ?>
     };
 </script>
-<script src="<?= APP_URL ?>/js/queue-manage.js?v=2"></script>
+<script src="<?= APP_URL ?>/js/queue-manage.js?v=3"></script>

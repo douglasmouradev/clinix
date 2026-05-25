@@ -36,6 +36,20 @@
         </tr>
         </thead>
         <tbody>
+        <?php if (empty($patients)): ?>
+            <tr>
+                <td colspan="5" class="empty-state-cell">
+                    <p class="empty-state-title">Nenhum paciente encontrado</p>
+                    <p class="empty-state-hint">
+                        <?php if (!empty($search)): ?>
+                            Tente outro termo de busca ou <a href="<?= APP_URL ?>/?route=patients">limpe o filtro</a>.
+                        <?php else: ?>
+                            <a href="<?= APP_URL ?>/?route=patient.form">Cadastre o primeiro paciente</a>.
+                        <?php endif; ?>
+                    </p>
+                </td>
+            </tr>
+        <?php endif; ?>
         <?php foreach ($patients as $patient): ?>
             <tr>
                 <td><?= e($patient['full_name']) ?></td>

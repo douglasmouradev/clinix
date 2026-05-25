@@ -64,6 +64,7 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawu
         <div class="kiosk-qr">
             <img src="<?= e($qrUrl) ?>" width="120" height="120" alt="QR Code do totem">
             <p class="kiosk-footer-hint">Após imprimir, aguarde ser chamado no painel.<br>Sem uso, esta tela reinicia em alguns segundos.</p>
+            <p class="kiosk-privacy">Seus dados são usados apenas para o atendimento de hoje, conforme a LGPD.</p>
         </div>
     </div>
     <script src="<?= APP_URL ?>/js/kiosk.js" defer></script>

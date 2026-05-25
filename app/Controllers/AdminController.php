@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Database;
 use App\Core\DeviceTokens;
+use App\Core\TenantSettings;
 use App\Core\PasswordPolicy;
 use App\Core\View;
 use App\Models\Billing;
@@ -148,7 +149,18 @@ final class AdminController
             'panelToken' => DeviceTokens::panelToken(tenantId()),
             'kioskToken' => DeviceTokens::kioskToken(tenantId()),
             'tenantSlug' => (string) ($tenant['slug'] ?? ''),
+            'panelHideNames' => TenantSettings::panelHideNames(),
+            'defaultTokenWarning' => APP_ENV === 'production' && TenantSettings::isDefaultPanelTokenInUse(),
         ]);
+    }
+
+    public function panelSettingsSave(): void
+    {
+        Auth::requireRole(['admin']);
+        TenantSettings::setPanelHideNames(isset($_POST['panel_hide_names']));
+        auditLog('admin.panel.settings', 'Configurações do painel/totem atualizadas');
+        flash('success', 'Configurações salvas.');
+        redirect('/?route=admin.panel');
     }
 
     public function clinicSlug(): void

@@ -58,16 +58,16 @@ Sistema SaaS para clínicas de pequeno e médio porte, com autenticação por se
 
 ## Fila e painel TV
 
-- Fila com AJAX (chamar/finalizar sem recarregar)
-- Painel com polling leve (4s local); SSE só em produção (`PANEL_USE_SSE=0` para desativar)
-- Histórico das últimas 5 chamadas no painel
-- URL: `/?route=queue.panel&tenant=SLUG&token=TOKEN` (ver Admin → Token do painel)
+- Fila com AJAX, **atualização automática** entre estações (polling 4s) e botão **Chamar próximo** (P → A → B)
+- Painel em **tela cheia** (sem menu admin); opção de **ocultar nomes** na TV (Admin → Token do painel)
+- Polling no painel; **SSE em produção** com fallback (`PANEL_USE_SSE=0` para desativar)
+- URL: `/?route=queue.panel&tenant=SLUG&token=TOKEN_PAINEL`
 
 ## Totem (tablet)
 
-- URL: `/?route=queue.kiosk&tenant=SLUG&token=TOKEN` (mesmo token do painel; ver Admin → Token do painel)
-- **Atendimento agendado:** informa CPF, valida agendamento do dia e imprime senha
-- **Não tenho agendamento:** emite senha na hora (fila avulsa)
+- URL: `/?route=queue.kiosk&tenant=SLUG&token=TOKEN_TOTEM` (token separado do painel)
+- **Prioritário (P),** **agendado (A)** com CPF, **sem agendamento (B)**
+- Rate limit anti-abuso; aviso LGPD na tela
 - Após imprimir, volta automaticamente à tela inicial do totem
 
 ## Administração

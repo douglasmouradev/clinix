@@ -8,6 +8,8 @@ use App\Core\Auth;
 use App\Core\CpfValidator;
 use App\Core\Database;
 use App\Core\DeviceTokens;
+use App\Core\KioskRateLimiter;
+use App\Core\TenantSettings;
 use App\Core\View;
 use App\Models\Appointment;
 use App\Models\Patient;
@@ -42,6 +44,7 @@ final class QueueController
             'csrfToken' => csrfToken(),
             'clinicName' => (string) ($tenant['name'] ?? APP_NAME),
             'kioskUrl' => $kioskUrl,
+            'queueDataUrl' => APP_URL . '/?route=queue.data',
         ]);
     }
 
@@ -108,6 +111,44 @@ final class QueueController
         }
 
         flash($ok ? 'success' : 'error', $ok ? 'Paciente chamado.' : 'Senha inválida.');
+        redirect('/?route=queue');
+    }
+
+    public function callNext(): void
+    {
+        Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
+        $room = trim((string) ($_POST['room'] ?? ''));
+        if ($room === '') {
+            $room = Auth::user()['role'] === 'reception' ? 'Recepção' : 'Triagem';
+        }
+
+        $queueModel = new Queue();
+        $next = $queueModel->nextWaiting();
+        $ok = false;
+        $called = null;
+
+        if ($next !== null) {
+            $dest = (string) ($next['room'] ?? '');
+            if ($dest === 'Agendado' || $dest === 'Sem agendamento' || $dest === 'Prioritário') {
+                $dest = $room;
+            }
+            $queueModel->call((int) $next['id'], $dest !== '' ? $dest : $room, (int) Auth::user()['id']);
+            auditLog('queue.call_next', 'Próxima senha #' . $next['ticket_number']);
+            $ok = true;
+            $called = $queueModel->currentCalled();
+        }
+
+        if (wantsJson()) {
+            jsonResponse([
+                'ok' => $ok,
+                'message' => $ok ? 'Próxima senha chamada.' : 'Nenhuma senha aguardando.',
+                'called' => $called ? $this->serializeCalled($called) : null,
+                'queue' => $this->serializeQueue($queueModel->ticketsForManage()),
+                'waiting_count' => $queueModel->waitingCount(),
+            ], $ok ? 200 : 422);
+        }
+
+        flash($ok ? 'success' : 'error', $ok ? 'Próxima senha chamada.' : 'Nenhuma senha aguardando.');
         redirect('/?route=queue');
     }
 
@@ -205,6 +246,8 @@ final class QueueController
             exit;
         }
 
+        $this->enforceKioskRate('scheduled');
+
         $cpf = CpfValidator::normalize((string) ($_POST['cpf'] ?? ''));
         $tenantSlug = trim((string) ($_POST['tenant'] ?? $_GET['tenant'] ?? ''));
 
@@ -242,6 +285,8 @@ final class QueueController
             exit;
         }
 
+        $this->enforceKioskRate('walkin');
+
         $tenantSlug = trim((string) ($_POST['tenant'] ?? $_GET['tenant'] ?? ''));
         $patientId = (new Patient())->walkInPatientId();
         $issued = $this->issueKioskTicket($patientId, 'Sem agendamento');
@@ -259,6 +304,8 @@ final class QueueController
             echo 'Acesso negado ao totem.';
             exit;
         }
+
+        $this->enforceKioskRate('priority');
 
         $tenantSlug = trim((string) ($_POST['tenant'] ?? $_GET['tenant'] ?? ''));
         $patientId = (new Patient())->priorityPatientId();
@@ -306,15 +353,17 @@ final class QueueController
         $payload = $this->buildPanelPayload();
         $useSse = APP_ENV === 'production' && (getenv('PANEL_USE_SSE') ?: '1') !== '0';
 
-        View::render('queue/panel', [
+        View::renderBare('queue/panel_bare', [
+            'clinicName' => (string) ($tenant['name'] ?? APP_NAME),
             'waiting_count' => $payload['waiting_count'],
             'panelDataUrl' => $this->panelDataUrl($slug),
-            'tenantSlug' => $slug,
+            'panelStreamUrl' => $this->panelPublicUrl('queue.panel.stream', $slug),
             'panelInitialPayload' => $payload,
             'recentCalls' => $payload['recent'],
             'displayCalled' => $payload['called'],
             'panelUseSse' => $useSse,
             'panelPollMs' => $useSse ? 3000 : 4000,
+            'panelHideNames' => TenantSettings::panelHideNames(),
         ]);
     }
 
@@ -587,12 +636,26 @@ final class QueueController
     }
 
     /** @param array<string, mixed> $row */
+    private function enforceKioskRate(string $action): void
+    {
+        if (!KioskRateLimiter::allow($action)) {
+            KioskRateLimiter::denyAndExit();
+        }
+    }
+
+    private function panelHideNames(): bool
+    {
+        return TenantSettings::panelHideNames();
+    }
+
     private function serializeRecent(array $row): array
     {
+        $hide = $this->panelHideNames();
+
         return [
             'id' => (int) $row['id'],
             'ticket_number' => (string) $row['ticket_number'],
-            'full_name' => (string) $row['full_name'],
+            'full_name' => panelDisplayName((string) $row['full_name'], $hide),
             'room' => (string) ($row['room'] ?? ''),
             'called_at' => (string) ($row['called_at'] ?? ''),
             'status' => (string) ($row['status'] ?? ''),
@@ -633,6 +696,7 @@ final class QueueController
             'ticket_number' => (string) $ticket['ticket_number'],
             'full_name' => (string) $ticket['full_name'],
             'status' => (string) $ticket['status'],
+            'status_label' => queueStatusLabel((string) ($ticket['status'] ?? '')),
             'room' => (string) ($ticket['room'] ?? ''),
         ], $queue);
     }
@@ -641,11 +705,12 @@ final class QueueController
     private function serializeCalled(array $called): array
     {
         $live = (bool) ($called['panel_live'] ?? ((string) ($called['status'] ?? '') === 'called'));
+        $hide = $this->panelHideNames();
 
         return [
             'id' => (int) $called['id'],
             'ticket_number' => (string) $called['ticket_number'],
-            'full_name' => (string) $called['full_name'],
+            'full_name' => panelDisplayName((string) $called['full_name'], $hide),
             'room' => (string) ($called['room'] ?? ''),
             'called_at' => (string) ($called['called_at'] ?? ''),
             'live' => $live,

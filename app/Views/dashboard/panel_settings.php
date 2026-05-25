@@ -8,6 +8,22 @@
     </div>
 </div>
 
+<?php if (!empty($defaultTokenWarning)): ?>
+    <div class="card" style="border-color:#f59e0b;background:#fffbeb;">
+        <strong>Atenção:</strong> o token do painel ainda é o padrão de fábrica. Rotacione o token do painel abaixo antes de usar em produção.
+    </div>
+<?php endif; ?>
+
+<form method="post" action="<?= APP_URL ?>/?route=admin.panel.save" class="card">
+    <?= csrfInput() ?>
+    <h3 style="margin-top:0;">Privacidade no painel TV</h3>
+    <label class="queue-print-option" style="margin-top:8px;">
+        <input type="checkbox" name="panel_hide_names" value="1" <?= !empty($panelHideNames) ? 'checked' : '' ?>>
+        <span>Ocultar nomes no painel (exibir apenas número da senha e destino)</span>
+    </label>
+    <button type="submit" class="btn small" style="width:auto;margin-top:14px;">Salvar configurações</button>
+</form>
+
 <div class="card">
     <h3 style="margin-top:0;">Painel TV</h3>
     <label>URL do painel</label>

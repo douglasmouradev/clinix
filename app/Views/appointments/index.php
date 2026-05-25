@@ -52,6 +52,17 @@
             </tr>
             </thead>
             <tbody>
+            <?php if (empty($appointments)): ?>
+                <tr>
+                    <td colspan="6" class="empty-state-cell">
+                        <p class="empty-state-title">Nenhum agendamento nesta data</p>
+                        <p class="empty-state-hint">
+                            <a href="<?= APP_URL ?>/?route=appointment.form">Criar agendamento</a>
+                            ou altere o filtro de data/status.
+                        </p>
+                    </td>
+                </tr>
+            <?php endif; ?>
             <?php foreach ($appointments as $appointment): ?>
                 <tr>
                     <td><?= e(formatDateTimeBr($appointment['scheduled_at'])) ?></td>

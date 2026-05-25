@@ -161,6 +161,18 @@ final class Queue
         return $row ?: null;
     }
 
+    public function nextWaiting(): ?array
+    {
+        $rows = $this->waiting();
+        foreach ($rows as $row) {
+            if ((string) ($row['status'] ?? '') === 'waiting') {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
     public function waitingCount(): int
     {
         $sql = 'SELECT COUNT(*) FROM queue_tickets

@@ -8,6 +8,26 @@ function e(string $value): string
 }
 
 /** HTTPS visto pelo cliente (inclui reverse proxy aaPanel/Nginx). */
+function queueStatusLabel(string $status): string
+{
+    return match ($status) {
+        'waiting' => 'Aguardando',
+        'called' => 'Chamado',
+        'done' => 'Finalizado',
+        default => $status,
+    };
+}
+
+function panelDisplayName(string $fullName, bool $hideNames): string
+{
+    $name = trim($fullName);
+    if ($hideNames && $name !== '') {
+        return 'Paciente';
+    }
+
+    return $name;
+}
+
 function requestIsHttps(): bool
 {
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {

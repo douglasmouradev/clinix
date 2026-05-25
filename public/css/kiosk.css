@@ -242,3 +242,10 @@ body.kiosk-body {
     opacity: 0.85;
     line-height: 1.45;
 }
+
+.kiosk-privacy {
+    margin: 10px 0 0;
+    font-size: 0.8rem;
+    opacity: 0.75;
+    line-height: 1.4;
+}

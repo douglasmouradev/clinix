@@ -4,13 +4,16 @@
 /** @var string $role */
 
 if (empty($queue)): ?>
-    <tr><td colspan="5">Nenhuma senha na fila.</td></tr>
+    <tr><td colspan="5" class="empty-state-cell">
+        <p class="empty-state-title">Nenhuma senha na fila</p>
+        <p class="empty-state-hint">Gere uma senha na recepção ou aguarde o totem.</p>
+    </td></tr>
 <?php else: ?>
     <?php foreach ($queue as $ticket): ?>
         <tr data-ticket-id="<?= (int) $ticket['id'] ?>">
             <td>#<?= e($ticket['ticket_number']) ?></td>
             <td><?= e($ticket['full_name']) ?></td>
-            <td><?= e($ticket['status']) ?></td>
+            <td><?= e(queueStatusLabel((string) $ticket['status'])) ?></td>
             <td><?= e($ticket['room'] ?? '-') ?></td>
             <td class="queue-actions">
                 <?php if (in_array($role, ['admin', 'reception'], true)): ?>
