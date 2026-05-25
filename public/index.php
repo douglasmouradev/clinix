@@ -41,6 +41,18 @@ session_set_cookie_params([
 ]);
 session_start();
 
+if (APP_ENV === 'production') {
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    if (!$isHttps && str_starts_with(APP_URL, 'https://')) {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if ($host !== '') {
+            header('Location: https://' . $host . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
+            exit;
+        }
+    }
+}
+
 $route = (string) ($_GET['route'] ?? 'dashboard');
 $httpMethod = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 

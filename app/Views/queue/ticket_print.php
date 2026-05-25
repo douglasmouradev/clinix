@@ -2,7 +2,13 @@
 /** @var array<string, mixed> $ticketData */
 /** @var string $clinicName */
 /** @var string $ticketKind */
+/** @var string $appointmentTime */
+/** @var string $printNotice */
+/** @var bool $isKiosk */
 $ticketKind = $ticketKind ?? '';
+$appointmentTime = $appointmentTime ?? '';
+$printNotice = $printNotice ?? '';
+$isKiosk = !empty($isKiosk);
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -11,7 +17,10 @@ $ticketKind = $ticketKind ?? '';
     <title>Senha #<?= e((string) $ticketData['ticket_number']) ?></title>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue-ticket-print.css">
 </head>
-<body class="ticket-print-body" onload="window.print()">
+<body class="ticket-print-body<?= $isKiosk ? ' ticket-print-kiosk' : '' ?>" onload="window.print()">
+    <?php if ($isKiosk): ?>
+        <div class="ticket-print-success" id="ticket-print-success" aria-live="polite">Senha emitida com sucesso</div>
+    <?php endif; ?>
     <article class="ticket-slip">
         <p class="ticket-clinic"><?= e($clinicName) ?></p>
         <p class="ticket-label">Senha de atendimento</p>
@@ -20,23 +29,48 @@ $ticketKind = $ticketKind ?? '';
         <?php endif; ?>
         <p class="ticket-number">#<?= e((string) $ticketData['ticket_number']) ?></p>
         <p class="ticket-patient"><?= e((string) $ticketData['full_name']) ?></p>
-        <?php if ((string) ($ticketData['room'] ?? '') !== ''): ?>
+        <?php if ($appointmentTime !== ''): ?>
+            <p class="ticket-appointment">Horário agendado: <?= e($appointmentTime) ?></p>
+        <?php endif; ?>
+        <?php if ((string) ($ticketData['room'] ?? '') !== '' && !in_array((string) $ticketData['room'], ['Agendado', 'Sem agendamento'], true)): ?>
             <p class="ticket-room">Destino: <?= e((string) $ticketData['room']) ?></p>
         <?php endif; ?>
         <p class="ticket-date"><?= e((string) ($ticketData['created_label'] ?? '')) ?></p>
-        <p class="ticket-hint">Aguarde ser chamado no painel</p>
+        <?php if ($printNotice !== ''): ?>
+            <p class="ticket-hint"><?= e($printNotice) ?></p>
+        <?php else: ?>
+            <p class="ticket-hint">Aguarde ser chamado no painel</p>
+        <?php endif; ?>
     </article>
     <script>
-        window.onafterprint = function () {
-            var params = new URLSearchParams(window.location.search);
-            var tenant = params.get('tenant') || '';
-            var token = params.get('token') || '';
-            var back = '<?= e(APP_URL) ?>/?route=queue.kiosk&token=' + encodeURIComponent(token);
-            if (tenant) {
-                back += '&tenant=' + encodeURIComponent(tenant);
-            }
-            window.location.replace(back);
-        };
+        (function () {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 660;
+                gain.gain.value = 0.12;
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
+
+            window.onafterprint = function () {
+                <?php if ($isKiosk): ?>
+                var params = new URLSearchParams(window.location.search);
+                var tenant = params.get('tenant') || '';
+                var token = params.get('token') || '';
+                var back = '<?= e(APP_URL) ?>/?route=queue.kiosk&token=' + encodeURIComponent(token);
+                if (tenant) {
+                    back += '&tenant=' + encodeURIComponent(tenant);
+                }
+                window.location.replace(back);
+                <?php else: ?>
+                window.close();
+                <?php endif; ?>
+            };
+        })();
     </script>
 </body>
 </html>

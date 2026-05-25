@@ -84,9 +84,32 @@ docker compose -f docker-compose.prod.yml restart app
 - https://clinix.tdesksolutions.com.br/?route=login
 - https://clinix.tdesksolutions.com.br/health.php
 
-Painel TV (token no admin):
+Painel TV (token no admin → **Token do painel**):
 
-`https://clinix.tdesksolutions.com.br/?route=queue.panel&tenant=clinica-demo&token=SEU_TOKEN`
+`https://clinix.tdesksolutions.com.br/?route=queue.panel&tenant=clinica-demo&token=TOKEN_PAINEL`
+
+Totem tablet (token separado no admin):
+
+`https://clinix.tdesksolutions.com.br/?route=queue.kiosk&tenant=clinica-demo&token=TOKEN_TOTEM`
+
+Senhas: **A001** (agendado, CPF) · **B001** (sem agendamento). A fila prioriza agendados.
+
+## Checklist pós-deploy
+
+```bash
+cd /opt/clinix-app
+./scripts/post-deploy-vps.sh
+```
+
+| Item | Comando / verificação |
+|------|------------------------|
+| `.env` | `APP_HTTP_PORT=8080`, `APP_URL=https://clinix...` |
+| Health | `curl -s http://127.0.0.1:8080/health.php` |
+| Proxy aaPanel | `proxy_pass http://127.0.0.1:8080` (sem `enable-php`) |
+| Painel TV | URL com token do painel em tela cheia |
+| Totem | URL com token do totem; testar CPF e “sem agendamento” |
+| Backup | `./scripts/backup-db.sh` (cron diário recomendado) |
+| Monitor | `./scripts/health-monitor.sh` (cron opcional) |
 
 ## IMPORTANTE: não use a porta 80 no Docker
 

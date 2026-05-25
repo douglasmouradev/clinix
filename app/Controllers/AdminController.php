@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Auth;
 use App\Core\Database;
+use App\Core\DeviceTokens;
 use App\Core\PasswordPolicy;
 use App\Core\View;
 use App\Models\Billing;
@@ -144,7 +145,8 @@ final class AdminController
         Auth::requireRole(['admin']);
         $tenant = (new Tenant())->find(tenantId());
         View::render('dashboard/panel_settings', [
-            'panelToken' => $this->currentPanelToken(),
+            'panelToken' => DeviceTokens::panelToken(tenantId()),
+            'kioskToken' => DeviceTokens::kioskToken(tenantId()),
             'tenantSlug' => (string) ($tenant['slug'] ?? ''),
         ]);
     }
@@ -197,13 +199,18 @@ final class AdminController
     public function rotatePanelToken(): void
     {
         Auth::requireRole(['admin']);
-        $newToken = bin2hex(random_bytes(16));
-        $sql = 'INSERT INTO app_settings (tenant_id, `key`, `value`) VALUES (:tenant_id, "panel_access_token", :token)
-                ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)';
-        $stmt = Database::connection()->prepare($sql);
-        $stmt->execute(['tenant_id' => tenantId(), 'token' => $newToken]);
+        DeviceTokens::rotate('panel_access_token', tenantId());
         auditLog('admin.panel.rotate_token', 'Token do painel rotacionado');
         flash('success', 'Token do painel atualizado com sucesso.');
+        redirect('/?route=admin.panel');
+    }
+
+    public function rotateKioskToken(): void
+    {
+        Auth::requireRole(['admin']);
+        DeviceTokens::rotate('kiosk_access_token', tenantId());
+        auditLog('admin.kiosk.rotate_token', 'Token do totem rotacionado');
+        flash('success', 'Token do totem atualizado com sucesso.');
         redirect('/?route=admin.panel');
     }
 

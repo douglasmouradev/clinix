@@ -27,9 +27,20 @@
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.frequency.value = 880;
-            gain.gain.value = 0.08;
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
             osc.start();
-            osc.stop(ctx.currentTime + 0.2);
+            osc.stop(ctx.currentTime + 0.45);
+            setTimeout(function () {
+                var osc2 = ctx.createOscillator();
+                var gain2 = ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.frequency.value = 1100;
+                gain2.gain.value = 0.12;
+                osc2.start();
+                osc2.stop(ctx.currentTime + 0.2);
+            }, 220);
         } catch (e) {
             /* opcional */
         }

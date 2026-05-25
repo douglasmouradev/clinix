@@ -12,21 +12,52 @@ final class Queue
     {
         $conn = Database::connection();
         $today = date('Y-m-d');
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM queue_tickets WHERE DATE(created_at) = :today AND tenant_id = :tenant_id');
-        $stmt->execute(['today' => $today, 'tenant_id' => tenantId()]);
-        $number = (int) $stmt->fetchColumn() + 1;
+        $prefix = self::ticketPrefixForRoom($room);
+
+        if ($prefix !== null) {
+            $stmt = $conn->prepare(
+                'SELECT COUNT(*) FROM queue_tickets
+                 WHERE DATE(created_at) = :today AND tenant_id = :tenant_id AND ticket_number LIKE :prefix'
+            );
+            $stmt->execute(['today' => $today, 'tenant_id' => tenantId(), 'prefix' => $prefix . '%']);
+            $number = (int) $stmt->fetchColumn() + 1;
+            $ticketNumber = $prefix . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+        } else {
+            $stmt = $conn->prepare('SELECT COUNT(*) FROM queue_tickets WHERE DATE(created_at) = :today AND tenant_id = :tenant_id');
+            $stmt->execute(['today' => $today, 'tenant_id' => tenantId()]);
+            $number = (int) $stmt->fetchColumn() + 1;
+            $ticketNumber = str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+        }
 
         $insert = $conn->prepare('INSERT INTO queue_tickets (tenant_id, patient_id, ticket_number, status, room, created_by) VALUES (:tenant_id, :patient_id, :ticket_number, :status, :room, :created_by)');
         $insert->execute([
             'tenant_id' => tenantId(),
             'patient_id' => $patientId,
-            'ticket_number' => str_pad((string) $number, 3, '0', STR_PAD_LEFT),
+            'ticket_number' => $ticketNumber,
             'status' => 'waiting',
             'room' => $room,
             'created_by' => $createdBy,
         ]);
 
         return $this->findTicket((int) $conn->lastInsertId());
+    }
+
+    public static function ticketPrefixForRoom(?string $room): ?string
+    {
+        return match ($room) {
+            'Agendado' => 'A',
+            'Sem agendamento' => 'B',
+            default => null,
+        };
+    }
+
+    public static function queuePriorityForRoom(?string $room): int
+    {
+        return match ($room) {
+            'Agendado' => 0,
+            'Sem agendamento' => 1,
+            default => 2,
+        };
     }
 
     public function findWaitingToday(int $patientId): ?array
@@ -85,6 +116,11 @@ final class Queue
                 ORDER BY 
                     (qt.status = "called") DESC,
                     CASE WHEN qt.status = "called" THEN qt.called_at END DESC,
+                    CASE
+                        WHEN qt.room = "Agendado" THEN 0
+                        WHEN qt.room = "Sem agendamento" THEN 1
+                        ELSE 2
+                    END,
                     qt.id ASC';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['tenant_id' => tenantId()]);

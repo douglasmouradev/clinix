@@ -15,25 +15,25 @@ body.kiosk-body {
     display: flex;
     flex-direction: column;
     padding: 24px;
-    max-width: 900px;
+    max-width: 920px;
     margin: 0 auto;
 }
 
 .kiosk-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
 }
 
 .kiosk-header h1 {
     margin: 0 0 8px;
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-size: clamp(1.85rem, 4vw, 2.6rem);
     font-weight: 800;
 }
 
 .kiosk-header p {
     margin: 0;
-    font-size: 1.1rem;
-    opacity: 0.9;
+    font-size: 1.15rem;
+    opacity: 0.92;
 }
 
 .kiosk-actions {
@@ -56,7 +56,7 @@ body.kiosk-body {
     align-items: center;
     justify-content: center;
     gap: 12px;
-    min-height: 200px;
+    min-height: 210px;
     padding: 28px 20px;
     border: none;
     border-radius: 20px;
@@ -85,14 +85,14 @@ body.kiosk-body {
 }
 
 .kiosk-btn-icon {
-    font-size: 2.5rem;
+    font-size: 2.6rem;
     line-height: 1;
 }
 
 .kiosk-btn small {
     font-size: 0.95rem;
     font-weight: 500;
-    opacity: 0.85;
+    opacity: 0.88;
 }
 
 .kiosk-form-card {
@@ -110,35 +110,57 @@ body.kiosk-body {
     display: block;
     font-weight: 600;
     margin-bottom: 10px;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
 }
 
 .kiosk-form-card input[type="text"] {
     width: 100%;
-    font-size: 1.75rem;
+    font-size: 1.85rem;
     padding: 16px 18px;
     border: 2px solid #cbd5e1;
     border-radius: 12px;
     text-align: center;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    background: #f8fafc;
 }
 
-.kiosk-form-card input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+.kiosk-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.kiosk-key {
+    min-height: 56px;
+    border: none;
+    border-radius: 12px;
+    background: #e2e8f0;
+    color: #0f172a;
+    font-size: 1.35rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.kiosk-key-wide {
+    grid-column: span 1;
+    font-size: 1rem;
+}
+
+.kiosk-key:active {
+    background: #cbd5e1;
 }
 
 .kiosk-form-actions {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 22px;
 }
 
 .kiosk-submit {
     width: 100%;
-    min-height: 56px;
+    min-height: 58px;
     font-size: 1.2rem;
     font-weight: 700;
     border: none;
@@ -163,13 +185,34 @@ body.kiosk-body {
     border: 1px solid #fecaca;
     border-radius: 10px;
     padding: 14px 16px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     font-weight: 600;
 }
 
-.kiosk-footer-hint {
+.kiosk-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    font-weight: 600;
+}
+
+.kiosk-qr {
     text-align: center;
-    margin-top: 24px;
-    font-size: 0.95rem;
-    opacity: 0.8;
+    margin-top: 22px;
+}
+
+.kiosk-qr img {
+    border-radius: 12px;
+    background: #fff;
+    padding: 8px;
+}
+
+.kiosk-footer-hint {
+    margin: 12px 0 0;
+    font-size: 0.92rem;
+    opacity: 0.85;
+    line-height: 1.45;
 }

@@ -9,6 +9,8 @@ use App\Core\Database;
 
 final class Patient
 {
+    public const WALK_IN_CPF = '00000000000';
+
     public function all(?string $search = null): array
     {
         $connection = Database::connection();
@@ -51,18 +53,22 @@ final class Patient
         return $patient ?: null;
     }
 
+    public function isWalkInRecord(array $patient): bool
+    {
+        return (string) ($patient['cpf'] ?? '') === self::WALK_IN_CPF;
+    }
+
     /** Paciente genérico para senhas sem agendamento (totem). */
     public function walkInPatientId(): int
     {
-        $walkInCpf = '00000000000';
-        $existing = $this->findByCpf($walkInCpf);
+        $existing = $this->findByCpf(self::WALK_IN_CPF);
         if ($existing !== null) {
             return (int) $existing['id'];
         }
 
         return $this->create([
             'full_name' => 'Atendimento sem agendamento',
-            'cpf' => $walkInCpf,
+            'cpf' => self::WALK_IN_CPF,
             'birth_date' => '2000-01-01',
             'sex' => 'nao_informado',
             'phone' => null,
@@ -117,7 +123,7 @@ final class Patient
         $sql = 'SELECT id, original_name, file_path, mime_type, file_size, created_at
                 FROM patient_documents
                 WHERE tenant_id = :tenant_id AND patient_id = :patient_id
-                ORDER BY id DESC';
+                ORDER BY created_at DESC';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['tenant_id' => tenantId(), 'patient_id' => $patientId]);
         return $stmt->fetchAll();
@@ -152,4 +158,3 @@ final class Patient
         $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
     }
 }
-

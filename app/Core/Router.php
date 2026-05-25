@@ -44,6 +44,7 @@ final class Router
             'admin.user.save' => ['class' => \App\Controllers\AdminController::class, 'method' => 'userSave', 'http' => ['POST'], 'roles' => ['admin']],
             'admin.panel' => ['class' => \App\Controllers\AdminController::class, 'method' => 'panelSettings', 'http' => ['GET'], 'roles' => ['admin']],
             'admin.panel.rotate' => ['class' => \App\Controllers\AdminController::class, 'method' => 'rotatePanelToken', 'http' => ['POST'], 'roles' => ['admin']],
+            'admin.panel.rotate.kiosk' => ['class' => \App\Controllers\AdminController::class, 'method' => 'rotateKioskToken', 'http' => ['POST'], 'roles' => ['admin']],
             'admin.clinic' => ['class' => \App\Controllers\AdminController::class, 'method' => 'clinicSlug', 'http' => ['GET'], 'roles' => ['admin']],
             'admin.clinic.save' => ['class' => \App\Controllers\AdminController::class, 'method' => 'clinicSlugSave', 'http' => ['POST'], 'roles' => ['admin']],
             'admin.api' => ['class' => \App\Controllers\AdminController::class, 'method' => 'apiTokens', 'http' => ['GET'], 'roles' => ['admin']],

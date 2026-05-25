@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\CpfValidator;
 use App\Core\Database;
+use App\Core\DeviceTokens;
 use App\Core\View;
 use App\Models\Appointment;
 use App\Models\Patient;
@@ -16,6 +17,7 @@ use App\Models\Tenant;
 final class QueueController
 {
     private ?string $cachedPanelToken = null;
+    private ?string $cachedKioskToken = null;
 
     public function index(): void
     {
@@ -23,12 +25,23 @@ final class QueueController
         $queue = (new Queue())->ticketsForManage();
         $patients = (new Patient())->all();
         $tenant = (new Tenant())->find(tenantId());
+        $kioskUrl = '';
+        $role = (string) Auth::user()['role'];
+        if (in_array($role, ['admin', 'reception'], true) && $tenant) {
+            $slug = (string) ($tenant['slug'] ?? '');
+            $kioskUrl = APP_URL . '/?' . http_build_query([
+                'route' => 'queue.kiosk',
+                'token' => DeviceTokens::kioskToken(tenantId()),
+                'tenant' => $slug,
+            ]);
+        }
         View::render('queue/index', [
             'queue' => $queue,
             'patients' => $patients,
-            'role' => Auth::user()['role'],
+            'role' => $role,
             'csrfToken' => csrfToken(),
             'clinicName' => (string) ($tenant['name'] ?? APP_NAME),
+            'kioskUrl' => $kioskUrl,
         ]);
     }
 
@@ -136,33 +149,40 @@ final class QueueController
 
         $tenant = (new Tenant())->find(tenantId());
         $clinicName = (string) ($tenant['name'] ?? APP_NAME);
-        $ticketData = $this->serializeTicket($ticket);
-        $ticketKind = $this->ticketKindLabel((string) ($ticket['room'] ?? ''));
-
+        $print = $this->buildTicketPrintContext($ticket, false);
+        extract($print, EXTR_SKIP);
         require __DIR__ . '/../Views/queue/ticket_print.php';
         exit;
     }
 
     public function kiosk(): void
     {
-        if (!$this->authorizePanel()) {
+        if (!$this->authorizeKiosk()) {
             http_response_code(403);
             echo 'Acesso negado ao totem.';
             exit;
         }
 
         $tenant = (new Tenant())->find(tenantId());
+        $tenantSlug = (string) ($tenant['slug'] ?? '');
+        $kioskUrl = APP_URL . '/?' . http_build_query([
+            'route' => 'queue.kiosk',
+            'token' => $this->kioskToken(),
+            'tenant' => $tenantSlug,
+        ]);
         View::renderBare('queue/kiosk', [
             'clinicName' => (string) ($tenant['name'] ?? APP_NAME),
-            'tenantSlug' => (string) ($tenant['slug'] ?? ''),
-            'panelToken' => $this->panelToken(),
+            'tenantSlug' => $tenantSlug,
+            'kioskToken' => $this->kioskToken(),
+            'kioskUrl' => $kioskUrl,
             'error' => (string) ($_GET['error'] ?? ''),
+            'info' => (string) ($_GET['info'] ?? ''),
         ]);
     }
 
     public function kioskScheduled(): void
     {
-        if (!$this->authorizePanel()) {
+        if (!$this->authorizeKiosk()) {
             http_response_code(403);
             echo 'Acesso negado ao totem.';
             exit;
@@ -172,14 +192,14 @@ final class QueueController
         View::renderBare('queue/kiosk_scheduled', [
             'clinicName' => (string) ($tenant['name'] ?? APP_NAME),
             'tenantSlug' => (string) ($tenant['slug'] ?? ''),
-            'panelToken' => $this->panelToken(),
+            'kioskToken' => $this->kioskToken(),
             'error' => (string) ($_GET['error'] ?? ''),
         ]);
     }
 
     public function kioskScheduledSubmit(): void
     {
-        if (!$this->authorizePanel()) {
+        if (!$this->authorizeKiosk()) {
             http_response_code(403);
             echo 'Acesso negado ao totem.';
             exit;
@@ -202,21 +222,21 @@ final class QueueController
             $this->redirectKioskError('Nenhum agendamento encontrado para hoje neste CPF.', $tenantSlug, true);
         }
 
-        $ticket = $this->issueKioskTicket(
+        $issued = $this->issueKioskTicket(
             (int) $patient['id'],
             'Agendado',
             (int) $appointment['id']
         );
-        if ($ticket === null) {
+        if ($issued['ticket'] === null) {
             $this->redirectKioskError('Não foi possível gerar a senha. Tente novamente.', $tenantSlug, true);
         }
 
-        $this->redirectKioskPrint((int) $ticket['id'], $tenantSlug);
+        $this->redirectKioskPrint((int) $issued['ticket']['id'], $tenantSlug, $issued['reused']);
     }
 
     public function kioskWalkIn(): void
     {
-        if (!$this->authorizePanel()) {
+        if (!$this->authorizeKiosk()) {
             http_response_code(403);
             echo 'Acesso negado ao totem.';
             exit;
@@ -224,17 +244,17 @@ final class QueueController
 
         $tenantSlug = trim((string) ($_POST['tenant'] ?? $_GET['tenant'] ?? ''));
         $patientId = (new Patient())->walkInPatientId();
-        $ticket = $this->issueKioskTicket($patientId, 'Sem agendamento');
-        if ($ticket === null) {
+        $issued = $this->issueKioskTicket($patientId, 'Sem agendamento');
+        if ($issued['ticket'] === null) {
             $this->redirectKioskError('Não foi possível gerar a senha. Tente novamente.', $tenantSlug, false);
         }
 
-        $this->redirectKioskPrint((int) $ticket['id'], $tenantSlug);
+        $this->redirectKioskPrint((int) $issued['ticket']['id'], $tenantSlug, $issued['reused']);
     }
 
     public function kioskTicketPrint(): void
     {
-        if (!$this->authorizePanel()) {
+        if (!$this->authorizeKiosk()) {
             http_response_code(403);
             echo 'Acesso negado.';
             exit;
@@ -248,11 +268,9 @@ final class QueueController
             exit;
         }
 
-        $tenant = (new Tenant())->find(tenantId());
-        $clinicName = (string) ($tenant['name'] ?? APP_NAME);
-        $ticketData = $this->serializeTicket($ticket);
-        $ticketKind = $this->ticketKindLabel((string) ($ticket['room'] ?? ''));
-
+        $reused = (string) ($_GET['reused'] ?? '') === '1';
+        $print = $this->buildTicketPrintContext($ticket, true, $reused);
+        extract($print, EXTR_SKIP);
         require __DIR__ . '/../Views/queue/ticket_print.php';
         exit;
     }
@@ -333,19 +351,23 @@ final class QueueController
         exit;
     }
 
-    /** @return ?array<string, mixed> */
-    private function issueKioskTicket(int $patientId, string $kind, ?int $appointmentId = null): ?array
+    /**
+     * @return array{ticket: ?array<string, mixed>, reused: bool}
+     */
+    private function issueKioskTicket(int $patientId, string $kind, ?int $appointmentId = null): array
     {
         $queue = new Queue();
-        $existing = $queue->findWaitingToday($patientId);
-        if ($existing !== null) {
-            return $existing;
+        if ($kind !== 'Sem agendamento') {
+            $existing = $queue->findWaitingToday($patientId);
+            if ($existing !== null) {
+                return ['ticket' => $existing, 'reused' => true];
+            }
         }
 
         try {
             $actorId = $queue->kioskActorUserId();
         } catch (\RuntimeException) {
-            return null;
+            return ['ticket' => null, 'reused' => false];
         }
 
         $ticket = $queue->generateToken($patientId, $actorId, $kind);
@@ -353,7 +375,7 @@ final class QueueController
             (new Appointment())->updateStatus($appointmentId, 'checked_in');
         }
 
-        return $ticket;
+        return ['ticket' => $ticket, 'reused' => false];
     }
 
     private function redirectKioskError(string $message, string $tenantSlug, bool $scheduled): void
@@ -362,7 +384,7 @@ final class QueueController
         $query = [
             'route' => $route,
             'error' => $message,
-            'token' => $this->panelToken(),
+            'token' => $this->kioskToken(),
         ];
         if ($tenantSlug !== '') {
             $query['tenant'] = $tenantSlug;
@@ -372,19 +394,86 @@ final class QueueController
         exit;
     }
 
-    private function redirectKioskPrint(int $ticketId, string $tenantSlug): void
+    private function redirectKioskPrint(int $ticketId, string $tenantSlug, bool $reused = false): void
     {
         $query = [
             'route' => 'queue.kiosk.print',
             'id' => $ticketId,
-            'token' => $this->panelToken(),
+            'token' => $this->kioskToken(),
         ];
+        if ($reused) {
+            $query['reused'] = '1';
+        }
         if ($tenantSlug !== '') {
             $query['tenant'] = $tenantSlug;
         }
 
         header('Location: ' . APP_URL . '/?' . http_build_query($query));
         exit;
+    }
+
+    /**
+     * @return array{clinicName: string, ticketData: array, ticketKind: string, appointmentTime: string, printNotice: string, isKiosk: bool}
+     */
+    private function buildTicketPrintContext(array $ticket, bool $isKiosk, bool $reused = false): array
+    {
+        $tenant = (new Tenant())->find(tenantId());
+        $clinicName = (string) ($tenant['name'] ?? APP_NAME);
+        $ticketData = $this->serializeTicket($ticket);
+        $patient = (new Patient())->find((int) $ticket['patient_id']);
+        if ($patient !== null && (new Patient())->isWalkInRecord($patient)) {
+            $ticketData['full_name'] = 'Senha avulsa';
+        }
+
+        $appointmentTime = '';
+        if ((string) ($ticket['room'] ?? '') === 'Agendado' && $patient !== null) {
+            $appointment = (new Appointment())->findTodayForPatient((int) $patient['id']);
+            if ($appointment !== null) {
+                $appointmentTime = formatDateTimeBr((string) $appointment['scheduled_at']);
+            }
+        }
+
+        $printNotice = $reused
+            ? 'Senha já emitida hoje — reimpressão.'
+            : 'Retire o comprovante e aguarde no painel.';
+
+        return [
+            'clinicName' => $clinicName,
+            'ticketData' => $ticketData,
+            'ticketKind' => $this->ticketKindLabel((string) ($ticket['room'] ?? '')),
+            'appointmentTime' => $appointmentTime,
+            'printNotice' => $printNotice,
+            'isKiosk' => $isKiosk,
+        ];
+    }
+
+    private function authorizeKiosk(): bool
+    {
+        $this->resolvePanelTenantFromRequest();
+
+        if (Auth::check()) {
+            return true;
+        }
+
+        $token = $this->requestKioskToken();
+
+        return $token !== '' && hash_equals($this->kioskToken(), $token);
+    }
+
+    private function requestKioskToken(): string
+    {
+        return trim((string) ($_POST['token'] ?? $_GET['token'] ?? ''));
+    }
+
+    private function kioskToken(): string
+    {
+        if ($this->cachedKioskToken !== null) {
+            return $this->cachedKioskToken;
+        }
+
+        $this->cachedKioskToken = DeviceTokens::kioskToken(tenantId());
+
+        return $this->cachedKioskToken;
     }
 
     private function ticketKindLabel(string $room): string
@@ -493,11 +582,7 @@ final class QueueController
             return $this->cachedPanelToken;
         }
 
-        $stmt = Database::connection()->prepare('SELECT `value` FROM app_settings WHERE `key` = "panel_access_token" AND tenant_id = :tenant_id LIMIT 1');
-        $stmt->execute(['tenant_id' => tenantId()]);
-        $token = (string) ($stmt->fetchColumn() ?: '');
-
-        $this->cachedPanelToken = $token !== '' ? $token : PANEL_ACCESS_TOKEN;
+        $this->cachedPanelToken = DeviceTokens::panelToken(tenantId());
 
         return $this->cachedPanelToken;
     }

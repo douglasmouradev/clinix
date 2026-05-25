@@ -1,5 +1,20 @@
 <div id="queue-flash" class="queue-flash" hidden></div>
 
+<?php if (!empty($kioskUrl)): ?>
+    <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">
+            <h3>Totem de autoatendimento</h3>
+            <span class="pill">Senhas A / B</span>
+        </div>
+        <p class="muted">Abra no tablet em tela cheia. Agendados usam CPF; sem agendamento emite senha B na hora.</p>
+        <div class="queue-kiosk-url-row">
+            <input id="queue-kiosk-url" readonly value="<?= e($kioskUrl) ?>">
+            <button type="button" class="btn secondary small" id="queue-kiosk-copy">Copiar URL</button>
+            <a class="btn secondary small" style="width:auto;" href="<?= e($kioskUrl) ?>" target="_blank" rel="noopener">Abrir totem</a>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div class="grid grid-2">
     <?php if (in_array($role, ['admin', 'reception'], true)): ?>
         <div class="card">
@@ -122,7 +137,38 @@
     .grid.grid-2 > .card {
         min-width: 0;
     }
+    .queue-kiosk-url-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: stretch;
+        margin-top: 10px;
+    }
+    .queue-kiosk-url-row input {
+        flex: 1;
+        min-width: 220px;
+    }
 </style>
+<script>
+    (function () {
+        var btn = document.getElementById('queue-kiosk-copy');
+        var input = document.getElementById('queue-kiosk-url');
+        if (!btn || !input) {
+            return;
+        }
+        btn.addEventListener('click', function () {
+            navigator.clipboard.writeText(input.value).then(function () {
+                btn.textContent = 'Copiado!';
+                setTimeout(function () { btn.textContent = 'Copiar URL'; }, 2000);
+            }).catch(function () {
+                input.select();
+                document.execCommand('copy');
+                btn.textContent = 'Copiado!';
+                setTimeout(function () { btn.textContent = 'Copiar URL'; }, 2000);
+            });
+        });
+    })();
+</script>
 <script>
     window.CLINIX_QUEUE = {
         appUrl: <?= json_encode(APP_URL, JSON_UNESCAPED_UNICODE) ?>,
