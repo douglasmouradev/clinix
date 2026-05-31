@@ -108,21 +108,57 @@ body.ticket-print-body {
 
     .ticket-slip {
         border: none;
-        padding: 2mm 1.5mm 1mm;
+        padding: 2mm 1.5mm 2mm;
         page-break-inside: avoid;
         break-inside: avoid;
     }
 
-    /* Avanço antes do corte — sem altura fixa na @page (evita zoom do driver) */
+    .ticket-clinic {
+        font-size: 12px;
+        margin-bottom: 7px;
+    }
+
+    .ticket-label {
+        font-size: 10px;
+    }
+
+    .ticket-kind {
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .ticket-number {
+        font-size: 38px;
+        margin: 7px 0 9px;
+    }
+
+    .ticket-patient {
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
+
+    .ticket-appointment,
+    .ticket-room,
+    .ticket-date {
+        font-size: 11px;
+        margin: 4px 0;
+    }
+
+    .ticket-hint {
+        font-size: 10px;
+        margin-top: 9px;
+    }
+
+    /* Avanço extra para a guilhotina (Diebold IT533) sem botão manual */
     .ticket-cut-feed {
         display: block;
-        height: 5mm;
+        height: 14mm;
         margin: 0;
         padding: 0;
     }
 
     @page {
         size: 57.5mm auto;
-        margin: 2mm 1mm 6mm;
+        margin: 2mm 1mm 12mm;
     }
 }
