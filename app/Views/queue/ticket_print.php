@@ -16,6 +16,9 @@ $isKiosk = !empty($isKiosk);
     <meta charset="utf-8">
     <title>Senha #<?= e((string) $ticketData['ticket_number']) ?></title>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue-ticket-print.css">
+    <style media="print">
+        @page { size: 57.5mm 95mm; margin: 0; }
+    </style>
 </head>
 <body class="ticket-print-body<?= $isKiosk ? ' ticket-print-kiosk' : '' ?>" onload="window.print()">
     <?php if ($isKiosk): ?>
@@ -42,6 +45,7 @@ $isKiosk = !empty($isKiosk);
             <p class="ticket-hint">Aguarde ser chamado no painel</p>
         <?php endif; ?>
     </article>
+    <div class="ticket-cut-feed" aria-hidden="true"></div>
     <script>
         (function () {
             try {
