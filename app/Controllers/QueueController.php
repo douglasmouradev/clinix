@@ -574,7 +574,7 @@ final class QueueController
 
     private function resolvePanelTenantFromRequest(): void
     {
-        $slug = trim((string) ($_GET['tenant'] ?? ''));
+        $slug = trim((string) ($_GET['tenant'] ?? $_POST['tenant'] ?? ''));
         if ($slug === '') {
             if (Auth::check() && isset($_SESSION['user']['tenant_id'])) {
                 $_SESSION['tenant_context_id'] = (int) $_SESSION['user']['tenant_id'];

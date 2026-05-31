@@ -13,11 +13,6 @@ final class Queue
         $conn = Database::connection();
         $today = date('Y-m-d');
         $prefix = self::ticketPrefixForRoom($room);
-        $lockKey = sprintf('clinix_q_%d_%s_%s', tenantId(), $prefix ?? 'N', $today);
-
-        if (!$this->acquireLock($conn, $lockKey)) {
-            return null;
-        }
 
         try {
             $conn->beginTransaction();
@@ -38,17 +33,18 @@ final class Queue
                 'created_by' => $createdBy,
             ]);
 
+            $ticketId = (int) $conn->lastInsertId();
             $conn->commit();
 
-            return $this->findTicket((int) $conn->lastInsertId());
-        } catch (\Throwable) {
+            return $ticketId > 0 ? $this->findTicket($ticketId) : null;
+        } catch (\Throwable $exception) {
             if ($conn->inTransaction()) {
                 $conn->rollBack();
             }
 
+            error_log('queue.generateToken: ' . $exception->getMessage());
+
             return null;
-        } finally {
-            $this->releaseLock($conn, $lockKey);
         }
     }
 
@@ -80,30 +76,15 @@ final class Queue
                  FROM queue_tickets
                  WHERE tenant_id = :tenant_id
                    AND DATE(created_at) = :today
-                   AND ticket_number REGEXP :numeric_only'
+                   AND ticket_number REGEXP \'^[0-9]+$\''
             );
             $stmt->execute([
                 'tenant_id' => tenantId(),
                 'today' => $today,
-                'numeric_only' => '^[0-9]+$',
             ]);
         }
 
         return ((int) $stmt->fetchColumn()) + 1;
-    }
-
-    private function acquireLock(\PDO $conn, string $lockKey): bool
-    {
-        $stmt = $conn->prepare('SELECT GET_LOCK(:lock_key, 10)');
-        $stmt->execute(['lock_key' => $lockKey]);
-
-        return (int) $stmt->fetchColumn() === 1;
-    }
-
-    private function releaseLock(\PDO $conn, string $lockKey): void
-    {
-        $stmt = $conn->prepare('SELECT RELEASE_LOCK(:lock_key)');
-        $stmt->execute(['lock_key' => $lockKey]);
     }
 
     public static function ticketPrefixForRoom(?string $room): ?string
