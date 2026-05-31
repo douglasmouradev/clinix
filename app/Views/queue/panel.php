@@ -57,4 +57,4 @@ $displayCalled = $displayCalled ?? null;
         pollMs: <?= (int) ($panelPollMs ?? 4000) ?>
     };
 </script>
-<script src="<?= APP_URL ?>/js/queue-panel.js?v=3" defer></script>
+<script src="<?= APP_URL ?>/js/queue-panel.js?v=5" defer></script>

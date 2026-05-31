@@ -71,6 +71,8 @@ $panelHideNames = !empty($panelHideNames);
         <?php endif; ?>
     </aside>
 
+    <p class="panel-voice-hint" id="panel-voice-hint">Toque na tela uma vez para ativar a voz</p>
+
     <script>
         window.CLINIX_PANEL = {
             dataUrl: <?= json_encode($panelDataUrl, JSON_UNESCAPED_UNICODE) ?>,
@@ -81,6 +83,6 @@ $panelHideNames = !empty($panelHideNames);
             pollMs: <?= (int) ($panelPollMs ?? 4000) ?>
         };
     </script>
-    <script src="<?= APP_URL ?>/js/queue-panel.js?v=4" defer></script>
+    <script src="<?= APP_URL ?>/js/queue-panel.js?v=5" defer></script>
 </body>
 </html>

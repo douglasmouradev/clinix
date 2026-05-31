@@ -7,9 +7,102 @@
     var pollTimer = null;
     var polling = false;
     var hideNames = config.hideNames === true;
+    var speechUnlocked = false;
+    var cachedPtVoice = null;
 
     if (!contentEl) {
         return;
+    }
+
+    function unlockSpeech() {
+        if (speechUnlocked || !window.speechSynthesis) {
+            return;
+        }
+        speechUnlocked = true;
+        try {
+            var silent = new SpeechSynthesisUtterance('');
+            silent.volume = 0;
+            window.speechSynthesis.speak(silent);
+            window.speechSynthesis.cancel();
+        } catch (e) {
+            /* opcional */
+        }
+    }
+
+    function hideVoiceHint() {
+        var hint = document.getElementById('panel-voice-hint');
+        if (hint) {
+            hint.hidden = true;
+        }
+    }
+
+    function onUserGesture() {
+        unlockSpeech();
+        hideVoiceHint();
+    }
+
+    document.addEventListener('click', onUserGesture, { once: true });
+    document.addEventListener('keydown', onUserGesture, { once: true });
+
+    function resolvePtVoice() {
+        if (cachedPtVoice || !window.speechSynthesis) {
+            return cachedPtVoice;
+        }
+        var voices = window.speechSynthesis.getVoices() || [];
+        cachedPtVoice = voices.find(function (voice) {
+            return /^pt(-|_)/i.test(voice.lang);
+        }) || null;
+        return cachedPtVoice;
+    }
+
+    if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = resolvePtVoice;
+    }
+    resolvePtVoice();
+
+    function digitWord(ch) {
+        var words = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        var n = parseInt(ch, 10);
+        return Number.isNaN(n) ? ch : words[n];
+    }
+
+    function ticketSpeech(ticket) {
+        var raw = String(ticket || '').replace(/^#/, '').trim();
+        if (!raw) {
+            return 'não informada';
+        }
+        return raw.split('').map(function (ch) {
+            return /\d/.test(ch) ? digitWord(ch) : ch;
+        }).join(', ');
+    }
+
+    function speakCall(called) {
+        if (!called || called.live !== true || !window.speechSynthesis) {
+            return;
+        }
+
+        unlockSpeech();
+
+        var parts = ['Atenção!', 'Senha', ticketSpeech(called.ticket_number)];
+        var name = displayName(called.full_name);
+        if (!hideNames && name && name !== 'Paciente') {
+            parts.push(name);
+        }
+        parts.push('Dirija-se a', String(called.room || 'o local de atendimento'));
+
+        var utterance = new SpeechSynthesisUtterance(parts.join('. '));
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        var voice = resolvePtVoice();
+        if (voice) {
+            utterance.voice = voice;
+        }
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
     }
 
     function escapeHtml(value) {
@@ -83,6 +176,9 @@
 
         if (isNew) {
             beep();
+            if (isLive) {
+                speakCall(called);
+            }
             window.setTimeout(function () {
                 var card = contentEl.querySelector('.panel-call-card');
                 if (card) {
