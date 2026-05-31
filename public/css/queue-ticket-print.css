@@ -149,16 +149,16 @@ body.ticket-print-body {
         margin-top: 9px;
     }
 
-    /* Avanço extra para a guilhotina (Diebold IT533) sem botão manual */
+    /* Avanço antes do corte — sem altura fixa na @page (evita zoom do driver) */
     .ticket-cut-feed {
         display: block;
-        height: 14mm;
+        height: 5mm;
         margin: 0;
         padding: 0;
     }
 
     @page {
         size: 57.5mm auto;
-        margin: 2mm 1mm 12mm;
+        margin: 2mm 1mm 6mm;
     }
 }
