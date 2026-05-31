@@ -3,6 +3,8 @@
 /** @var list<array<string, mixed>> $queue */
 /** @var string $role */
 
+$defaultCallRoom = queueDefaultCallRoom($role);
+
 if (empty($queue)): ?>
     <tr><td colspan="5" class="empty-state-cell">
         <p class="empty-state-title">Nenhuma senha na fila</p>
@@ -30,7 +32,7 @@ if (empty($queue)): ?>
                         class="btn small queue-call-btn"
                         style="width:auto;"
                         data-ticket-id="<?= (int) $ticket['id'] ?>"
-                        data-room="<?= e($ticket['room'] ?: ($role === 'reception' ? 'Recepção' : 'Triagem')) ?>"
+                        data-room="<?= e(queueSuggestedCallRoom((string) ($ticket['room'] ?? ''), $defaultCallRoom)) ?>"
                     >Chamar senha</button>
                 <?php endif; ?>
                 <?php if (in_array($role, ['admin', 'nurse', 'doctor'], true) && $ticket['status'] === 'called'): ?>

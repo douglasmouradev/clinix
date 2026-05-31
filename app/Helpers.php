@@ -18,6 +18,28 @@ function queueStatusLabel(string $status): string
     };
 }
 
+function queueSuggestedCallRoom(?string $ticketRoom, string $defaultRoom): string
+{
+    $ticketRoom = trim((string) $ticketRoom);
+    $kioskKinds = ['Prioritário', 'Agendado', 'Sem agendamento'];
+
+    if ($ticketRoom === '' || in_array($ticketRoom, $kioskKinds, true)) {
+        return $defaultRoom;
+    }
+
+    return $ticketRoom;
+}
+
+function queueDefaultCallRoom(string $role): string
+{
+    return match ($role) {
+        'reception' => 'Recepção',
+        'nurse' => 'Triagem 1',
+        'doctor' => 'Consultorio 1',
+        default => 'Triagem',
+    };
+}
+
 function panelDisplayName(string $fullName, bool $hideNames): string
 {
     $name = trim($fullName);

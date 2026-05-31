@@ -31,4 +31,11 @@ final class QueueTicketTest extends TestCase
         $this->assertSame('B100', Queue::formatTicketNumber(100, 'B'));
         $this->assertSame('007', Queue::formatTicketNumber(7, null));
     }
+
+    public function testQueueSuggestedCallRoom(): void
+    {
+        $this->assertSame('Recepção', queueSuggestedCallRoom('Agendado', 'Recepção'));
+        $this->assertSame('Triagem 2', queueSuggestedCallRoom('Triagem 2', 'Recepção'));
+        $this->assertSame('Consultorio 1', queueSuggestedCallRoom('', 'Consultorio 1'));
+    }
 }

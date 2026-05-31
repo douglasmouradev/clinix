@@ -15,6 +15,22 @@
         called: 'Chamado',
         done: 'Finalizado',
     };
+    var kioskKinds = ['Prioritário', 'Agendado', 'Sem agendamento'];
+
+    function suggestedCallRoom(ticketRoom) {
+        var room = String(ticketRoom || '').trim();
+        if (!room || kioskKinds.indexOf(room) !== -1) {
+            return config.defaultRoom || 'Triagem';
+        }
+        return room;
+    }
+
+    function resolveCallRoom(fallbackRoom) {
+        if (callRoom && callRoom.value.trim() !== '') {
+            return callRoom.value.trim();
+        }
+        return suggestedCallRoom(fallbackRoom);
+    }
 
     function showFlash(type, message) {
         if (!flashEl) {
@@ -79,7 +95,7 @@
         var selectHtml = '<option value="">Selecione</option>';
 
         queue.forEach(function (ticket) {
-            var room = ticket.room || config.defaultRoom || 'Triagem';
+            var room = suggestedCallRoom(ticket.room);
             html += '<tr data-ticket-id="' + ticket.id + '">' +
                 '<td>#' + escapeHtml(ticket.ticket_number) + '</td>' +
                 '<td>' + escapeHtml(ticket.full_name) + '</td>' +
@@ -254,7 +270,11 @@
 
         document.querySelectorAll('.queue-call-btn').forEach(function (button) {
             button.addEventListener('click', function () {
-                callTicket(button.getAttribute('data-ticket-id'), button.getAttribute('data-room'), button);
+                callTicket(
+                    button.getAttribute('data-ticket-id'),
+                    resolveCallRoom(button.getAttribute('data-room')),
+                    button
+                );
             });
         });
 
@@ -318,7 +338,10 @@
     if (callSelect && callRoom) {
         callSelect.addEventListener('change', function () {
             var option = callSelect.options[callSelect.selectedIndex];
-            var room = option ? option.getAttribute('data-room') : '';
+            if (!option || !option.value) {
+                return;
+            }
+            var room = option.getAttribute('data-room');
             if (room) {
                 callRoom.value = room;
             }

@@ -46,14 +46,22 @@
             <h3>Chamar próximo da fila</h3>
             <p class="muted">Respeita prioridade P → A → B.</p>
             <label class="queue-field-label">Sala ou destino</label>
-            <input name="room" id="queue-next-room" value="<?= $role === 'reception' ? 'Recepção' : 'Triagem' ?>">
+            <input
+                type="text"
+                name="room"
+                id="queue-next-room"
+                value="<?= e(queueDefaultCallRoom($role)) ?>"
+                placeholder="Ex.: Recepção, Triagem 1, Consultório 2"
+                autocomplete="off"
+            >
             <div class="queue-form-actions">
                 <button type="button" class="btn" id="queue-call-next-btn">Chamar próximo</button>
             </div>
         </div>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['admin', 'nurse', 'doctor'], true)): ?>
+    <?php if (in_array($role, ['admin', 'reception', 'nurse', 'doctor'], true)): ?>
+        <?php $defaultCallRoom = queueDefaultCallRoom($role); ?>
         <div class="card">
             <h3>Chamar paciente</h3>
             <form class="queue-ajax-form" method="post" action="<?= APP_URL ?>/?route=queue.call" data-queue-action="call">
@@ -63,14 +71,21 @@
                     <option value="">Selecione</option>
                     <?php foreach ($queue as $ticket): ?>
                         <?php if ($ticket['status'] === 'waiting'): ?>
-                            <option value="<?= (int) $ticket['id'] ?>" data-room="<?= e($ticket['room'] ?: ($role === 'nurse' ? 'Triagem 1' : 'Consultorio 1')) ?>">
+                            <option value="<?= (int) $ticket['id'] ?>" data-room="<?= e(queueSuggestedCallRoom((string) ($ticket['room'] ?? ''), $defaultCallRoom)) ?>">
                                 #<?= e($ticket['ticket_number']) ?> - <?= e($ticket['full_name']) ?>
                             </option>
                         <?php endif; ?>
                     <?php endforeach; ?>
                 </select>
                 <label class="queue-field-label">Sala ou profissional</label>
-                <input name="room" id="queue-call-room" value="<?= $role === 'nurse' ? 'Triagem 1' : 'Consultorio 1' ?>">
+                <input
+                    type="text"
+                    name="room"
+                    id="queue-call-room"
+                    value="<?= e($defaultCallRoom) ?>"
+                    placeholder="Ex.: Recepção, Triagem 1, Consultório 2"
+                    autocomplete="off"
+                >
                 <div class="queue-form-actions">
                     <button type="submit">Chamar</button>
                 </div>
@@ -193,7 +208,7 @@
         canCall: <?= json_encode(in_array($role, ['admin', 'reception', 'nurse', 'doctor'], true)) ?>,
         canDone: <?= json_encode(in_array($role, ['admin', 'nurse', 'doctor'], true)) ?>,
         canPrint: <?= json_encode(in_array($role, ['admin', 'reception'], true)) ?>,
-        defaultRoom: <?= json_encode($role === 'reception' ? 'Recepção' : ($role === 'nurse' ? 'Triagem' : 'Triagem'), JSON_UNESCAPED_UNICODE) ?>
+        defaultRoom: <?= json_encode(queueDefaultCallRoom($role), JSON_UNESCAPED_UNICODE) ?>
     };
 </script>
-<script src="<?= APP_URL ?>/js/queue-manage.js?v=3"></script>
+<script src="<?= APP_URL ?>/js/queue-manage.js?v=4"></script>
