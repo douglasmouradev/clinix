@@ -122,7 +122,7 @@
             return;
         }
         var url = config.appUrl + '/?route=queue.ticket.print&id=' + encodeURIComponent(String(ticketId));
-        window.open(url, 'clinix_ticket_print', 'width=420,height=640');
+        window.open(url, 'clinix_ticket_print', 'width=300,height=640');
     }
 
     function postQueue(route, body) {
