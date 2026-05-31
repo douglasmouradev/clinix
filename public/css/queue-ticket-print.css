@@ -8,10 +8,15 @@ body.ticket-print-body {
     color: #0f172a;
 }
 
-.ticket-slip {
+.ticket-print-sheet {
     width: 57.5mm;
     max-width: 100%;
     margin: 0 auto;
+}
+
+.ticket-slip {
+    width: 100%;
+    margin: 0;
     padding: 8px 4px;
     border: 2px dashed #334155;
     border-radius: 8px;
@@ -87,36 +92,37 @@ body.ticket-print-body {
         width: 57.5mm;
         margin: 0;
         padding: 0;
-        overflow: hidden;
     }
 
     .ticket-print-success {
         display: none;
     }
 
-    .ticket-slip {
-        border: none;
+    .ticket-print-sheet {
         width: 57.5mm;
-        margin: 0;
-        padding: 3mm 2mm 2mm;
-        page-break-after: always;
-        page-break-inside: avoid;
-        break-after: page;
-        break-inside: avoid;
-    }
-
-    /* Avanço extra para a guilhotina detectar fim de página (Diebold IT533) */
-    .ticket-cut-feed {
-        display: block;
-        height: 6mm;
         margin: 0;
         padding: 0;
         page-break-after: always;
         break-after: page;
     }
 
-    @page {
-        size: 57.5mm 95mm;
+    .ticket-slip {
+        border: none;
+        padding: 2mm 1.5mm 1mm;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Avanço antes do corte — sem altura fixa na @page (evita zoom do driver) */
+    .ticket-cut-feed {
+        display: block;
+        height: 5mm;
         margin: 0;
+        padding: 0;
+    }
+
+    @page {
+        size: 57.5mm auto;
+        margin: 2mm 1mm 6mm;
     }
 }

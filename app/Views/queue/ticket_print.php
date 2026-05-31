@@ -16,14 +16,12 @@ $isKiosk = !empty($isKiosk);
     <meta charset="utf-8">
     <title>Senha #<?= e((string) $ticketData['ticket_number']) ?></title>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue-ticket-print.css">
-    <style media="print">
-        @page { size: 57.5mm 95mm; margin: 0; }
-    </style>
 </head>
 <body class="ticket-print-body<?= $isKiosk ? ' ticket-print-kiosk' : '' ?>" onload="window.print()">
     <?php if ($isKiosk): ?>
         <div class="ticket-print-success" id="ticket-print-success" aria-live="polite">Senha emitida com sucesso</div>
     <?php endif; ?>
+    <div class="ticket-print-sheet">
     <article class="ticket-slip">
         <p class="ticket-clinic"><?= e($clinicName) ?></p>
         <p class="ticket-label">Senha de atendimento</p>
@@ -46,6 +44,7 @@ $isKiosk = !empty($isKiosk);
         <?php endif; ?>
     </article>
     <div class="ticket-cut-feed" aria-hidden="true"></div>
+    </div>
     <script>
         (function () {
             try {
