@@ -1,0 +1,27 @@
+---
+description: Enviar alterações ao GitHub automaticamente após implementar mudanças
+alwaysApply: true
+---
+
+# Push automático no GitHub
+
+Após concluir alterações de código neste projeto, **sempre** commitar e enviar para o GitHub sem esperar o usuário pedir.
+
+## Fluxo obrigatório
+
+1. Verificar `git status` e `git diff`
+2. **Não** commitar `.env`, credenciais ou segredos
+3. Criar commit com mensagem clara em português (foco no porquê)
+4. Executar `git push origin main`
+5. Informar ao usuário o hash do commit e o comando para atualizar o servidor (`git pull` em `/opt/clinix-app`)
+
+## Exceções
+
+- Não commitar se não houver mudanças reais
+- Não fazer push force para `main`
+- Se o push falhar (auth/rede), reportar o erro e orientar correção
+
+## Servidor de produção
+
+Repositório: `https://github.com/douglasmouradev/clinix`
+Deploy: `/opt/clinix-app` → `git pull origin main` + `docker compose -f docker-compose.prod.yml restart app`
