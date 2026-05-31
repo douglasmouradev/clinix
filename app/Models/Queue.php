@@ -13,33 +13,97 @@ final class Queue
         $conn = Database::connection();
         $today = date('Y-m-d');
         $prefix = self::ticketPrefixForRoom($room);
+        $lockKey = sprintf('clinix_q_%d_%s_%s', tenantId(), $prefix ?? 'N', $today);
 
-        if ($prefix !== null) {
-            $stmt = $conn->prepare(
-                'SELECT COUNT(*) FROM queue_tickets
-                 WHERE DATE(created_at) = :today AND tenant_id = :tenant_id AND ticket_number LIKE :prefix'
-            );
-            $stmt->execute(['today' => $today, 'tenant_id' => tenantId(), 'prefix' => $prefix . '%']);
-            $number = (int) $stmt->fetchColumn() + 1;
-            $ticketNumber = $prefix . str_pad((string) $number, 3, '0', STR_PAD_LEFT);
-        } else {
-            $stmt = $conn->prepare('SELECT COUNT(*) FROM queue_tickets WHERE DATE(created_at) = :today AND tenant_id = :tenant_id');
-            $stmt->execute(['today' => $today, 'tenant_id' => tenantId()]);
-            $number = (int) $stmt->fetchColumn() + 1;
-            $ticketNumber = str_pad((string) $number, 3, '0', STR_PAD_LEFT);
+        if (!$this->acquireLock($conn, $lockKey)) {
+            return null;
         }
 
-        $insert = $conn->prepare('INSERT INTO queue_tickets (tenant_id, patient_id, ticket_number, status, room, created_by) VALUES (:tenant_id, :patient_id, :ticket_number, :status, :room, :created_by)');
-        $insert->execute([
-            'tenant_id' => tenantId(),
-            'patient_id' => $patientId,
-            'ticket_number' => $ticketNumber,
-            'status' => 'waiting',
-            'room' => $room,
-            'created_by' => $createdBy,
-        ]);
+        try {
+            $conn->beginTransaction();
 
-        return $this->findTicket((int) $conn->lastInsertId());
+            $sequence = $this->nextSequenceForDay($conn, $today, $prefix);
+            $ticketNumber = self::formatTicketNumber($sequence, $prefix);
+
+            $insert = $conn->prepare(
+                'INSERT INTO queue_tickets (tenant_id, patient_id, ticket_number, status, room, created_by)
+                 VALUES (:tenant_id, :patient_id, :ticket_number, :status, :room, :created_by)'
+            );
+            $insert->execute([
+                'tenant_id' => tenantId(),
+                'patient_id' => $patientId,
+                'ticket_number' => $ticketNumber,
+                'status' => 'waiting',
+                'room' => $room,
+                'created_by' => $createdBy,
+            ]);
+
+            $conn->commit();
+
+            return $this->findTicket((int) $conn->lastInsertId());
+        } catch (\Throwable) {
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+
+            return null;
+        } finally {
+            $this->releaseLock($conn, $lockKey);
+        }
+    }
+
+    public static function formatTicketNumber(int $sequence, ?string $prefix): string
+    {
+        $padded = str_pad((string) max(1, $sequence), 3, '0', STR_PAD_LEFT);
+
+        return $prefix !== null ? $prefix . $padded : $padded;
+    }
+
+    private function nextSequenceForDay(\PDO $conn, string $today, ?string $prefix): int
+    {
+        if ($prefix !== null) {
+            $stmt = $conn->prepare(
+                'SELECT MAX(CAST(SUBSTRING(ticket_number, 2) AS UNSIGNED))
+                 FROM queue_tickets
+                 WHERE tenant_id = :tenant_id
+                   AND DATE(created_at) = :today
+                   AND ticket_number LIKE :prefix_pattern'
+            );
+            $stmt->execute([
+                'tenant_id' => tenantId(),
+                'today' => $today,
+                'prefix_pattern' => $prefix . '%',
+            ]);
+        } else {
+            $stmt = $conn->prepare(
+                'SELECT MAX(CAST(ticket_number AS UNSIGNED))
+                 FROM queue_tickets
+                 WHERE tenant_id = :tenant_id
+                   AND DATE(created_at) = :today
+                   AND ticket_number REGEXP :numeric_only'
+            );
+            $stmt->execute([
+                'tenant_id' => tenantId(),
+                'today' => $today,
+                'numeric_only' => '^[0-9]+$',
+            ]);
+        }
+
+        return ((int) $stmt->fetchColumn()) + 1;
+    }
+
+    private function acquireLock(\PDO $conn, string $lockKey): bool
+    {
+        $stmt = $conn->prepare('SELECT GET_LOCK(:lock_key, 10)');
+        $stmt->execute(['lock_key' => $lockKey]);
+
+        return (int) $stmt->fetchColumn() === 1;
+    }
+
+    private function releaseLock(\PDO $conn, string $lockKey): void
+    {
+        $stmt = $conn->prepare('SELECT RELEASE_LOCK(:lock_key)');
+        $stmt->execute(['lock_key' => $lockKey]);
     }
 
     public static function ticketPrefixForRoom(?string $room): ?string
