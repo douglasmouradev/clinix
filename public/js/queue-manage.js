@@ -128,7 +128,11 @@
             countPill.textContent = queue.length + ' na fila';
         }
         if (callSelect) {
+            var selectedTicketId = callSelect.value;
             callSelect.innerHTML = selectHtml;
+            if (selectedTicketId && callSelect.querySelector('option[value="' + selectedTicketId + '"]')) {
+                callSelect.value = selectedTicketId;
+            }
         }
         bindActionButtons();
     }

@@ -211,4 +211,4 @@
         defaultRoom: <?= json_encode(queueDefaultCallRoom($role), JSON_UNESCAPED_UNICODE) ?>
     };
 </script>
-<script src="<?= APP_URL ?>/js/queue-manage.js?v=4"></script>
+<script src="<?= APP_URL ?>/js/queue-manage.js?v=5"></script>
