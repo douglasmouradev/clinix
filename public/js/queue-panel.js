@@ -7,42 +7,58 @@
     var pollTimer = null;
     var polling = false;
     var hideNames = config.hideNames === true;
-    var speechUnlocked = false;
     var cachedPtVoice = null;
+    var audioCtx = null;
 
     if (!contentEl) {
         return;
     }
 
-    function unlockSpeech() {
-        if (speechUnlocked || !window.speechSynthesis) {
+    function getAudioContext() {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) {
+            return null;
+        }
+        if (!audioCtx) {
+            audioCtx = new Ctx();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(function () {
+                /* TV pode bloquear até política do navegador permitir */
+            });
+        }
+        return audioCtx;
+    }
+
+    function warmUpSpeech() {
+        if (!window.speechSynthesis) {
             return;
         }
-        speechUnlocked = true;
         try {
-            var silent = new SpeechSynthesisUtterance('');
-            silent.volume = 0;
-            window.speechSynthesis.speak(silent);
+            resolvePtVoice();
             window.speechSynthesis.cancel();
+            var warm = new SpeechSynthesisUtterance(' ');
+            warm.volume = 0.01;
+            warm.rate = 10;
+            warm.lang = 'pt-BR';
+            var voice = resolvePtVoice();
+            if (voice) {
+                warm.voice = voice;
+            }
+            window.speechSynthesis.speak(warm);
         } catch (e) {
             /* opcional */
         }
     }
 
-    function hideVoiceHint() {
-        var hint = document.getElementById('panel-voice-hint');
-        if (hint) {
-            hint.hidden = true;
-        }
+    function warmUpAudio() {
+        getAudioContext();
+        warmUpSpeech();
     }
 
-    function onUserGesture() {
-        unlockSpeech();
-        hideVoiceHint();
-    }
-
-    document.addEventListener('click', onUserGesture, { once: true });
-    document.addEventListener('keydown', onUserGesture, { once: true });
+    warmUpAudio();
+    window.addEventListener('load', warmUpAudio);
+    window.setInterval(warmUpAudio, 30000);
 
     function resolvePtVoice() {
         if (cachedPtVoice || !window.speechSynthesis) {
@@ -81,7 +97,7 @@
             return;
         }
 
-        unlockSpeech();
+        warmUpSpeech();
 
         var parts = ['Atenção!', 'Senha', ticketSpeech(called.ticket_number)];
         var name = displayName(called.full_name);
@@ -122,7 +138,10 @@
 
     function beep() {
         try {
-            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var ctx = getAudioContext();
+            if (!ctx) {
+                return;
+            }
             var osc = ctx.createOscillator();
             var gain = ctx.createGain();
             osc.connect(gain);

@@ -89,24 +89,3 @@ body.panel-tv-body {
     margin: 0;
     color: #64748b;
 }
-
-.panel-voice-hint {
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    margin: 0;
-    padding: 10px 18px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #e2e8f0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    z-index: 20;
-    pointer-events: none;
-}
-
-.panel-voice-hint[hidden] {
-    display: none;
-}
