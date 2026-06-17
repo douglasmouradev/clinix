@@ -15,7 +15,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=5">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=6">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/panel.css">
 </head>
 <body class="<?= $user ? 'is-auth' : 'is-guest' ?>">
@@ -23,11 +23,18 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
 <header class="topbar">
     <div class="topbar-inner">
     <a class="brand" href="<?= APP_URL ?>/?route=dashboard">
-        <?php
-        $brandClass = 'brand-lockup';
-        $showWordmark = true;
-        include __DIR__ . '/../partials/clinix_brand.php';
-        ?>
+        <span class="brand-logo-wrap">
+            <img
+                src="<?= APP_URL ?>/img/clinix-logo.png"
+                srcset="<?= APP_URL ?>/img/clinix-logo.png 369w, <?= APP_URL ?>/img/clinix-logo@2x.png 738w"
+                sizes="120px"
+                alt="Clinix"
+                class="brand-logo"
+                width="369"
+                height="257"
+                decoding="async"
+            >
+        </span>
     </a>
         <nav class="menu">
             <a class="<?= $currentRoute === 'dashboard' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=dashboard">Inicio</a>

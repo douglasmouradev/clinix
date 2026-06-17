@@ -1,11 +1,18 @@
 <div class="login-shell">
     <div class="login-wrap">
         <section class="login-hero">
-            <?php
-            $brandClass = 'login-hero-brand';
-            $showWordmark = true;
-            include __DIR__ . '/../partials/clinix_brand.php';
-            ?>
+            <div class="login-hero-logo-wrap">
+                <img
+                    src="<?= APP_URL ?>/img/clinix-logo.png"
+                    srcset="<?= APP_URL ?>/img/clinix-logo.png 369w, <?= APP_URL ?>/img/clinix-logo@2x.png 738w"
+                    sizes="220px"
+                    alt="Clinix"
+                    class="login-hero-logo"
+                    width="369"
+                    height="257"
+                    decoding="async"
+                >
+            </div>
             <p class="login-hero-tagline">Gestão inteligente para equipes de atendimento clínico.</p>
             <div class="hero-list">
                 <div class="hero-item">Prontuário compartilhado por equipe</div>
