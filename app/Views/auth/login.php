@@ -1,8 +1,12 @@
 <div class="login-shell">
     <div class="login-wrap">
         <section class="login-hero">
-            <img src="<?= APP_URL ?>/img/clinix-logo-on-dark.png" alt="Clinix" class="login-hero-logo" width="369" height="257">
-            <p class="login-hero-tagline">Gestao inteligente para equipes de atendimento clinico.</p>
+            <?php
+            $brandClass = 'login-hero-brand';
+            $showWordmark = true;
+            include __DIR__ . '/../partials/clinix_brand.php';
+            ?>
+            <p class="login-hero-tagline">Gestão inteligente para equipes de atendimento clínico.</p>
             <div class="hero-list">
                 <div class="hero-item">Prontuário compartilhado por equipe</div>
                 <div class="hero-item">Fila de atendimento com chamada em tempo real</div>
