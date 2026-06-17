@@ -1,7 +1,7 @@
 <div class="login-shell">
     <div class="login-wrap">
         <section class="login-hero">
-            <img src="<?= APP_URL ?>/img/clinix-logo.png" alt="Clinix" class="login-hero-logo">
+            <img src="<?= APP_URL ?>/img/clinix-logo-on-dark.png" alt="Clinix" class="login-hero-logo" width="369" height="257">
             <p class="login-hero-tagline">Gestao inteligente para equipes de atendimento clinico.</p>
             <div class="hero-list">
                 <div class="hero-item">Prontuário compartilhado por equipe</div>

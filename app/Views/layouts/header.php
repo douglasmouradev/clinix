@@ -15,14 +15,14 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=3">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=4">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/panel.css">
 </head>
 <body>
 <header class="topbar">
     <div class="topbar-inner">
     <a class="brand" href="<?= APP_URL ?>/?route=dashboard">
-        <img src="<?= APP_URL ?>/img/clinix-logo.png" alt="" class="brand-logo">
+        <img src="<?= APP_URL ?>/img/clinix-logo-on-dark.png" alt="" class="brand-logo" width="369" height="257">
         <span class="sr-only"><?= e(APP_NAME) ?></span>
     </a>
     <?php if ($user): ?>

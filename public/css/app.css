@@ -44,15 +44,13 @@ p { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
     height: 34px;
     width: auto;
     object-fit: contain;
-    mix-blend-mode: screen;
 }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 .login-hero-logo {
     display: block;
-    width: min(100%, 260px);
+    width: min(100%, 240px);
     height: auto;
     object-fit: contain;
-    mix-blend-mode: screen;
     margin-bottom: 18px;
 }
 .menu { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
