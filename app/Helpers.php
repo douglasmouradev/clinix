@@ -7,6 +7,16 @@ function e(string $value): string
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
+function queueStatusBadgeClass(string $status): string
+{
+    return match ($status) {
+        'waiting' => 'status-badge status-waiting',
+        'called' => 'status-badge status-called',
+        'done' => 'status-badge status-done',
+        default => 'status-badge',
+    };
+}
+
 /** HTTPS visto pelo cliente (inclui reverse proxy aaPanel/Nginx). */
 function queueStatusLabel(string $status): string
 {

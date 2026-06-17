@@ -41,6 +41,8 @@ session_set_cookie_params([
 ]);
 session_start();
 
+\App\Core\SecurityHeaders::send();
+
 $route = (string) ($_GET['route'] ?? 'dashboard');
 $httpMethod = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
 

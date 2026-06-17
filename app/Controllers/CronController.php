@@ -13,7 +13,10 @@ final class CronController
     public function retention(): void
     {
         $secret = CRON_SECRET;
-        $provided = (string) ($_GET['secret'] ?? $_SERVER['HTTP_X_CRON_SECRET'] ?? '');
+        $provided = trim((string) ($_SERVER['HTTP_X_CRON_SECRET'] ?? ''));
+        if ($provided === '' && APP_ENV !== 'production') {
+            $provided = trim((string) ($_GET['secret'] ?? ''));
+        }
         if ($secret === '' || !hash_equals($secret, $provided)) {
             http_response_code(403);
             echo 'Forbidden';

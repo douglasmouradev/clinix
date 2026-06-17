@@ -15,11 +15,23 @@ final class OnboardingController
 {
     public function form(): void
     {
+        if (!ONBOARDING_ENABLED) {
+            http_response_code(404);
+            View::render('auth/onboarding', ['error' => 'Cadastro de novas clínicas está desabilitado.']);
+            return;
+        }
+
         View::render('auth/onboarding');
     }
 
     public function submit(): void
     {
+        if (!ONBOARDING_ENABLED) {
+            http_response_code(403);
+            View::render('auth/onboarding', ['error' => 'Cadastro de novas clínicas está desabilitado.']);
+            return;
+        }
+
         $clinicName = trim((string) ($_POST['clinic_name'] ?? ''));
         $slug = trim((string) ($_POST['clinic_slug'] ?? ''));
         $adminName = trim((string) ($_POST['admin_name'] ?? ''));

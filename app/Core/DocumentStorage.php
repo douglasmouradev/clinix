@@ -6,6 +6,15 @@ namespace App\Core;
 
 final class DocumentStorage
 {
+    private const ALLOWED_EXTENSIONS = [
+        'pdf' => 'application/pdf',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'doc' => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+
     private const ALLOWED_MIME = [
         'application/pdf',
         'image/jpeg',
@@ -36,7 +45,14 @@ final class DocumentStorage
         }
 
         $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $safeName = bin2hex(random_bytes(16)) . ($extension !== '' ? '.' . $extension : '');
+        if ($extension === '' || !array_key_exists($extension, self::ALLOWED_EXTENSIONS)) {
+            return null;
+        }
+        if (self::ALLOWED_EXTENSIONS[$extension] !== $mimeType) {
+            return null;
+        }
+
+        $safeName = bin2hex(random_bytes(16)) . '.' . $extension;
         $relativeDir = $scope . '/' . tenantId();
         $absoluteDir = self::basePath() . '/' . $relativeDir;
 
@@ -61,6 +77,9 @@ final class DocumentStorage
     public static function absolutePath(string $filePath): string
     {
         $normalized = ltrim(str_replace('\\', '/', $filePath), '/');
+        if (str_contains($normalized, '..')) {
+            throw new \InvalidArgumentException('Caminho de arquivo inválido.');
+        }
         if (str_starts_with($normalized, 'uploads/')) {
             return dirname(__DIR__, 2) . '/public/' . $normalized;
         }

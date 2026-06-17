@@ -23,14 +23,19 @@ final class PasswordReset
         return $plain;
     }
 
-    public function findValidUserId(string $plainToken): ?int
+    public function findValidUserId(string $plainToken, ?int $tenantId = null): ?int
     {
         $hash = hash('sha256', $plainToken);
-        $stmt = Database::connection()->prepare(
-            'SELECT user_id FROM password_reset_tokens
-             WHERE token_hash = :hash AND used_at IS NULL AND expires_at > NOW() LIMIT 1'
-        );
-        $stmt->execute(['hash' => $hash]);
+        $sql = 'SELECT user_id FROM password_reset_tokens
+             WHERE token_hash = :hash AND used_at IS NULL AND expires_at > NOW()';
+        $params = ['hash' => $hash];
+        if ($tenantId !== null) {
+            $sql .= ' AND tenant_id = :tenant_id';
+            $params['tenant_id'] = $tenantId;
+        }
+        $sql .= ' LIMIT 1';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute($params);
         $userId = $stmt->fetchColumn();
 
         return $userId !== false ? (int) $userId : null;

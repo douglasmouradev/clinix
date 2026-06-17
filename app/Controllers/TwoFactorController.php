@@ -29,7 +29,7 @@ final class TwoFactorController
     public function enable(): void
     {
         $code = trim((string) ($_POST['code'] ?? ''));
-        $secret = (string) ($_SESSION['pending_2fa_setup_secret'] ?? ($_POST['secret'] ?? ''));
+        $secret = (string) ($_SESSION['pending_2fa_setup_secret'] ?? '');
         if ($secret === '' || !Totp::verify($secret, $code)) {
             flash('error', 'Código inválido. Tente novamente.');
             redirect('/?route=admin.2fa');

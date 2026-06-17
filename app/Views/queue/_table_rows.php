@@ -13,16 +13,15 @@ if (empty($queue)): ?>
 <?php else: ?>
     <?php foreach ($queue as $ticket): ?>
         <tr data-ticket-id="<?= (int) $ticket['id'] ?>">
-            <td>#<?= e($ticket['ticket_number']) ?></td>
-            <td><?= e($ticket['full_name']) ?></td>
-            <td><?= e(queueStatusLabel((string) $ticket['status'])) ?></td>
-            <td><?= e($ticket['room'] ?? '-') ?></td>
+            <td data-label="Senha">#<?= e($ticket['ticket_number']) ?></td>
+            <td data-label="Paciente"><?= e($ticket['full_name']) ?></td>
+            <td data-label="Status"><span class="<?= e(queueStatusBadgeClass((string) $ticket['status'])) ?>"><?= e(queueStatusLabel((string) $ticket['status'])) ?></span></td>
+            <td data-label="Destino"><?= e($ticket['room'] ?? '-') ?></td>
             <td class="queue-actions">
                 <?php if (in_array($role, ['admin', 'reception'], true)): ?>
                     <button
                         type="button"
                         class="btn secondary small queue-print-btn"
-                        style="width:auto;"
                         data-ticket-id="<?= (int) $ticket['id'] ?>"
                     >Imprimir</button>
                 <?php endif; ?>
@@ -30,7 +29,6 @@ if (empty($queue)): ?>
                     <button
                         type="button"
                         class="btn small queue-call-btn"
-                        style="width:auto;"
                         data-ticket-id="<?= (int) $ticket['id'] ?>"
                         data-room="<?= e(queueSuggestedCallRoom((string) ($ticket['room'] ?? ''), $defaultCallRoom)) ?>"
                     >Chamar senha</button>
@@ -39,7 +37,6 @@ if (empty($queue)): ?>
                     <button
                         type="button"
                         class="btn small queue-done-btn"
-                        style="width:auto;"
                         data-ticket-id="<?= (int) $ticket['id'] ?>"
                     >Finalizar</button>
                 <?php endif; ?>

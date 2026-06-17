@@ -15,10 +15,14 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=6">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=7">
+    <?php if (str_starts_with((string) $currentRoute, 'queue')): ?>
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/queue.css?v=1">
+    <?php endif; ?>
 </head>
 <body class="<?= $user ? 'is-auth' : 'is-guest' ?>">
+<a class="skip-link" href="#main-content">Ir para o conteúdo</a>
 <?php if ($user): ?>
 <header class="topbar">
     <div class="topbar-inner">
@@ -85,9 +89,9 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
             <a class="side-link <?= $currentRoute === 'queue.panel' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=queue.panel">Painel de chamada</a>
         </nav>
     </aside>
-    <main class="content">
+    <main class="content" id="main-content">
 <?php else: ?>
-<main>
+<main id="main-content">
 <?php endif; ?>
 
 <?php if (!empty($flash['message'])): ?>

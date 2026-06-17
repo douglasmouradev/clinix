@@ -36,7 +36,7 @@ final class ApiController
 
     private function authorize(): bool
     {
-        $token = (string) ($_SERVER['HTTP_X_API_TOKEN'] ?? $_GET['api_token'] ?? '');
+        $token = $this->resolveApiToken();
         if ($token === '') {
             return false;
         }
@@ -53,5 +53,20 @@ final class ApiController
 
         $_SESSION['tenant_context_id'] = (int) $tenantId;
         return true;
+    }
+
+    private function resolveApiToken(): string
+    {
+        $header = trim((string) ($_SERVER['HTTP_X_API_TOKEN'] ?? ''));
+        if ($header !== '') {
+            return $header;
+        }
+
+        $auth = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+        if (preg_match('/^Bearer\s+(\S+)$/i', $auth, $matches) === 1) {
+            return $matches[1];
+        }
+
+        return '';
     }
 }

@@ -44,7 +44,7 @@
                     <label>Senha</label>
                     <input type="password" name="password" required>
                 </div>
-                <button>Entrar</button>
+                <button class="btn-block">Entrar</button>
             </form>
             <p style="margin-top:12px;text-align:center;"><a class="link" href="<?= APP_URL ?>/?route=password.forgot&tenant=<?= urlencode($tenant_slug ?? '') ?>">Esqueci minha senha</a></p>
         </div>

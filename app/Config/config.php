@@ -75,9 +75,23 @@ define('STRIPE_SECRET_KEY', envValue('STRIPE_SECRET_KEY', ''));
 define('STRIPE_WEBHOOK_SECRET', envValue('STRIPE_WEBHOOK_SECRET', ''));
 define('CRON_SECRET', envValue('CRON_SECRET', ''));
 define('APP_ENV', envValue('APP_ENV', 'local'));
+define('ONBOARDING_ENABLED', envValue('ONBOARDING_ENABLED', APP_ENV === 'production' ? '0' : '1') === '1');
 define('MAIL_FROM', envValue('MAIL_FROM', 'noreply@clinix.local'));
 define('SMTP_HOST', envValue('SMTP_HOST', ''));
 define('SMTP_PORT', (int) envValue('SMTP_PORT', '587'));
 define('SMTP_USER', envValue('SMTP_USER', ''));
 define('SMTP_PASS', envValue('SMTP_PASS', ''));
+
+if (APP_ENV === 'production') {
+    $weakPanelTokens = ['', 'clinix-painel-2026', 'change-me'];
+    $weakCronSecrets = ['', 'change-me-cron-secret', 'change-me'];
+    if (in_array(PANEL_ACCESS_TOKEN, $weakPanelTokens, true) || in_array(CRON_SECRET, $weakCronSecrets, true)) {
+        if (PHP_SAPI !== 'cli') {
+            http_response_code(503);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Configuração insegura: defina PANEL_ACCESS_TOKEN e CRON_SECRET fortes em produção.';
+            exit;
+        }
+    }
+}
 

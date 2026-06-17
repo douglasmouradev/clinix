@@ -6,18 +6,18 @@ $stats = $stats ?? [];
 <div class="card soft">
     <div class="card-title">
         <div>
-            <h2>Painel Principal</h2>
+            <h1 class="page-title">Painel Principal</h1>
             <p>Bem-vindo, <?= e($user['name']) ?>.</p>
         </div>
         <span class="pill"><?= e(roleLabel($user['role'])) ?></span>
     </div>
     <div class="stats">
-        <div class="stat"><strong>Pacientes ativos</strong><p><?= (int) ($stats['patients'] ?? 0) ?></p></div>
-        <div class="stat"><strong>Consultas hoje</strong><p><?= (int) ($stats['appointments_today'] ?? 0) ?></p></div>
-        <div class="stat"><strong>Fila aguardando</strong><p><?= (int) ($stats['queue_waiting'] ?? 0) ?></p></div>
-        <div class="stat"><strong>Registros hoje</strong><p><?= (int) ($stats['records_today'] ?? 0) ?></p></div>
+        <div class="stat"><strong>Pacientes ativos</strong><p class="stat-value"><?= (int) ($stats['patients'] ?? 0) ?></p></div>
+        <div class="stat"><strong>Consultas hoje</strong><p class="stat-value"><?= (int) ($stats['appointments_today'] ?? 0) ?></p></div>
+        <div class="stat"><strong>Fila aguardando</strong><p class="stat-value"><?= (int) ($stats['queue_waiting'] ?? 0) ?></p></div>
+        <div class="stat"><strong>Registros hoje</strong><p class="stat-value"><?= (int) ($stats['records_today'] ?? 0) ?></p></div>
         <?php if (($user['role'] ?? '') === 'admin'): ?>
-            <div class="stat"><strong>Faturas em aberto</strong><p><?= (int) ($stats['open_invoices'] ?? 0) ?></p></div>
+            <div class="stat"><strong>Faturas em aberto</strong><p class="stat-value"><?= (int) ($stats['open_invoices'] ?? 0) ?></p></div>
         <?php endif; ?>
     </div>
 </div>

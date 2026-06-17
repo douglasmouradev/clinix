@@ -15,9 +15,13 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawu
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Totem — <?= e($clinicName) ?></title>
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/kiosk.css?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/kiosk.css?v=3">
 </head>
 <body class="kiosk-body" data-kiosk-idle-seconds="45">
     <div class="kiosk-shell">
@@ -67,6 +71,6 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawu
             <p class="kiosk-privacy">Seus dados são usados apenas para o atendimento de hoje, conforme a LGPD.</p>
         </div>
     </div>
-    <script src="<?= APP_URL ?>/js/kiosk.js?v=2" defer></script>
+    <script src="<?= APP_URL ?>/js/kiosk.js?v=3" defer></script>
 </body>
 </html>

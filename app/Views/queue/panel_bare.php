@@ -19,8 +19,9 @@ $panelHideNames = !empty($panelHideNames);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Painel — <?= e($clinicName) ?></title>
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/panel.css?v=8">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel-tv.css?v=8">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel-tv.css?v=9">
 </head>
 <body class="panel-tv-body">
     <header class="panel-tv-header">

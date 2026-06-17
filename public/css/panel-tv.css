@@ -3,7 +3,7 @@ body.panel-tv-body {
     min-height: 100vh;
     display: grid;
     grid-template-rows: auto 1fr auto;
-    background: #0f172a;
+    background: var(--header);
     color: #f8fafc;
     font-family: "Figtree", "Noto Sans", system-ui, sans-serif;
 }
@@ -42,8 +42,8 @@ body.panel-tv-body {
 }
 
 .panel-tv-main .panel-call-active {
-    background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
-    border-color: #60a5fa;
+    background: linear-gradient(135deg, var(--header-end), var(--brand));
+    border-color: #93c5fd;
     color: #fff;
 }
 
@@ -61,6 +61,12 @@ body.panel-tv-body {
 @keyframes panelTvPulse {
     0%, 100% { filter: brightness(1); }
     50% { filter: brightness(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel-tv-main .panel-call-card.is-new {
+        animation: none;
+    }
 }
 
 .panel-tv-main .panel-call-idle {

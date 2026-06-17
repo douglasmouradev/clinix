@@ -1,0 +1,86 @@
+.queue-flash {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+.queue-flash.success { background: var(--success-bg); color: var(--success-ink); border: 1px solid #86efac; }
+.queue-flash.error { background: var(--danger-bg); color: var(--danger-ink); border: 1px solid #fca5a5; }
+.queue-row-calling { opacity: .55; pointer-events: none; }
+.queue-field-label { margin-top: 10px; }
+.queue-print-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #f8fbfc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+.queue-print-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.queue-print-option label {
+    display: inline;
+    margin: 0;
+    font-weight: 500;
+    line-height: 1.4;
+    cursor: pointer;
+}
+.queue-form-actions { margin-top: 12px; }
+.queue-form-actions .btn-block { width: 100%; }
+.queue-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.queue-kiosk-url-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: stretch;
+    margin-top: 10px;
+}
+.queue-kiosk-url-row input { flex: 1; min-width: 220px; }
+
+@media (max-width: 640px) {
+    .queue-table thead { display: none; }
+    .queue-table tbody tr {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        background: #fff;
+    }
+    .queue-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        border: 0;
+        font-size: 14px;
+    }
+    .queue-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+    .queue-table tbody td.queue-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .queue-table tbody td.queue-actions::before { display: none; }
+    .queue-table tbody td:first-child {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--brand-dark);
+        padding-bottom: 8px;
+    }
+    .queue-table tbody td:first-child::before { display: none; }
+}

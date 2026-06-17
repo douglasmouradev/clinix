@@ -35,7 +35,7 @@
                     <label for="queue-auto-print">Imprimir senha automaticamente</label>
                 </div>
                 <div class="queue-form-actions">
-                    <button type="submit">Gerar senha</button>
+                    <button type="submit" class="btn-block">Gerar senha</button>
                 </div>
             </form>
         </div>
@@ -87,7 +87,7 @@
                     autocomplete="off"
                 >
                 <div class="queue-form-actions">
-                    <button type="submit">Chamar</button>
+                    <button type="submit" class="btn-block">Chamar</button>
                 </div>
             </form>
         </div>
@@ -101,7 +101,7 @@
         <span class="muted" id="queue-sync-label" style="font-size:13px;"></span>
     </div>
     <div class="table-wrap">
-        <table>
+        <table class="queue-table">
             <thead>
             <tr><th>Senha</th><th>Paciente</th><th>Status</th><th>Destino</th><th>Ações</th></tr>
             </thead>
@@ -112,71 +112,6 @@
     </div>
 </div>
 
-<style>
-    .queue-flash {
-        margin-bottom: 14px;
-        padding: 12px 14px;
-        border-radius: 12px;
-        font-weight: 600;
-    }
-    .queue-flash.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .queue-flash.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    .queue-row-calling { opacity: .55; pointer-events: none; }
-    .queue-field-label { margin-top: 10px; }
-    .queue-print-option {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 12px;
-        padding: 10px 12px;
-        background: #f8fbfc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-    }
-    .queue-print-option input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-    }
-    .queue-print-option label {
-        display: inline;
-        margin: 0;
-        font-weight: 500;
-        line-height: 1.4;
-        cursor: pointer;
-    }
-    .queue-form-actions {
-        margin-top: 12px;
-    }
-    .queue-form-actions button {
-        width: 100%;
-    }
-    .queue-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-    }
-    .queue-actions .btn,
-    .queue-actions button {
-        width: auto;
-        margin: 0;
-    }
-    .grid.grid-2 > .card {
-        min-width: 0;
-    }
-    .queue-kiosk-url-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: stretch;
-        margin-top: 10px;
-    }
-    .queue-kiosk-url-row input {
-        flex: 1;
-        min-width: 220px;
-    }
-</style>
 <script>
     (function () {
         var btn = document.getElementById('queue-kiosk-copy');
@@ -211,4 +146,4 @@
         defaultRoom: <?= json_encode(queueDefaultCallRoom($role), JSON_UNESCAPED_UNICODE) ?>
     };
 </script>
-<script src="<?= APP_URL ?>/js/queue-manage.js?v=5"></script>
+<script src="<?= APP_URL ?>/js/queue-manage.js?v=6"></script>

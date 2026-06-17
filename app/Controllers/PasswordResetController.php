@@ -39,15 +39,21 @@ final class PasswordResetController
             if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 Mailer::send($email, 'Redefinição de senha - Clinix', $body);
             }
-            @file_put_contents(
-                dirname(__DIR__, 2) . '/storage/logs/password-reset.log',
-                date('c') . " user={$username} link={$link}\n",
-                FILE_APPEND
-            );
+            if (APP_ENV !== 'production') {
+                @file_put_contents(
+                    dirname(__DIR__, 2) . '/storage/logs/password-reset.log',
+                    date('c') . " user={$username} link={$link}\n",
+                    FILE_APPEND
+                );
+            }
         }
 
+        $successMessage = APP_ENV === 'production'
+            ? 'Se os dados estiverem corretos, você receberá instruções por e-mail.'
+            : 'Se os dados estiverem corretos, você receberá instruções por e-mail (ou verifique storage/logs/password-reset.log em ambiente local).';
+
         View::render('auth/forgot_password', [
-            'success' => 'Se os dados estiverem corretos, você receberá instruções por e-mail (ou verifique storage/logs/password-reset.log em ambiente local).',
+            'success' => $successMessage,
             'tenant_slug' => $tenantSlug,
         ]);
     }
@@ -68,11 +74,14 @@ final class PasswordResetController
         $confirm = (string) ($_POST['confirm_password'] ?? '');
 
         $tenant = (new Tenant())->findBySlug($tenantSlug);
-        if ($tenant) {
-            $_SESSION['tenant_context_id'] = (int) $tenant['id'];
+        if (!$tenant) {
+            View::render('auth/reset_password', ['error' => 'Clínica não encontrada.', 'token' => $token, 'tenant_slug' => $tenantSlug]);
+            return;
         }
 
-        $userId = (new PasswordReset())->findValidUserId($token);
+        $_SESSION['tenant_context_id'] = (int) $tenant['id'];
+
+        $userId = (new PasswordReset())->findValidUserId($token, (int) $tenant['id']);
         if ($userId === null) {
             View::render('auth/reset_password', ['error' => 'Link inválido ou expirado.', 'token' => $token, 'tenant_slug' => $tenantSlug]);
             return;

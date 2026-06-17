@@ -72,6 +72,19 @@
         syncEl.textContent = 'Atualizado há ' + secs + ' s';
     }
 
+    function statusBadgeClass(status) {
+        if (status === 'waiting') {
+            return 'status-badge status-waiting';
+        }
+        if (status === 'called') {
+            return 'status-badge status-called';
+        }
+        if (status === 'done') {
+            return 'status-badge status-done';
+        }
+        return 'status-badge';
+    }
+
     function renderRows(queue) {
         if (!tableBody) {
             return;
@@ -97,26 +110,27 @@
         queue.forEach(function (ticket) {
             var room = suggestedCallRoom(ticket.room);
             html += '<tr data-ticket-id="' + ticket.id + '">' +
-                '<td>#' + escapeHtml(ticket.ticket_number) + '</td>' +
-                '<td>' + escapeHtml(ticket.full_name) + '</td>' +
-                '<td>' + escapeHtml(statusLabel(ticket)) + '</td>' +
-                '<td>' + escapeHtml(ticket.room || '-') + '</td>' +
+                '<td data-label="Senha">#' + escapeHtml(ticket.ticket_number) + '</td>' +
+                '<td data-label="Paciente">' + escapeHtml(ticket.full_name) + '</td>' +
+                '<td data-label="Status"><span class="' + statusBadgeClass(ticket.status) + '">' +
+                escapeHtml(statusLabel(ticket)) + '</span></td>' +
+                '<td data-label="Destino">' + escapeHtml(ticket.room || '-') + '</td>' +
                 '<td class="queue-actions">';
 
             if (config.canPrint) {
-                html += '<button type="button" class="btn secondary small queue-print-btn" style="width:auto;" ' +
+                html += '<button type="button" class="btn secondary small queue-print-btn" ' +
                     'data-ticket-id="' + ticket.id + '">Imprimir</button>';
             }
 
             if (config.canCall && ticket.status === 'waiting') {
-                html += '<button type="button" class="btn small queue-call-btn" style="width:auto;" ' +
+                html += '<button type="button" class="btn small queue-call-btn" ' +
                     'data-ticket-id="' + ticket.id + '" data-room="' + escapeHtml(room) + '">Chamar senha</button>';
                 selectHtml += '<option value="' + ticket.id + '" data-room="' + escapeHtml(room) + '">#' +
                     escapeHtml(ticket.ticket_number) + ' - ' + escapeHtml(ticket.full_name) + '</option>';
             }
 
             if (config.canDone && ticket.status === 'called') {
-                html += '<button type="button" class="btn small queue-done-btn" style="width:auto;" ' +
+                html += '<button type="button" class="btn small queue-done-btn" ' +
                     'data-ticket-id="' + ticket.id + '">Finalizar</button>';
             }
 
