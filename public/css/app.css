@@ -39,9 +39,22 @@ p { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
 }
 .brand { color: #fff; font-weight: 700; text-decoration: none; letter-spacing: .02em; font-size: 18px; display: inline-flex; align-items: center; }
-.brand-logo { height: 32px; width: auto; display: block; }
+.brand-logo {
+    display: block;
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+    mix-blend-mode: screen;
+}
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-.login-hero-logo { display: block; margin-bottom: 18px; max-width: 240px; width: 100%; height: auto; }
+.login-hero-logo {
+    display: block;
+    width: min(100%, 260px);
+    height: auto;
+    object-fit: contain;
+    mix-blend-mode: screen;
+    margin-bottom: 18px;
+}
 .menu { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .menu form { margin: 0; display: inline-flex; }
 .menu form button { width: auto; }
