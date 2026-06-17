@@ -121,6 +121,11 @@
         window.speechSynthesis.speak(utterance);
     }
 
+    function ticketNumberHtml(ticketNumber) {
+        return '<span class="panel-call-hash" aria-hidden="true">#</span>' +
+            '<span class="panel-call-digits">' + escapeHtml(ticketNumber) + '</span>';
+    }
+
     function escapeHtml(value) {
         return String(value)
             .replace(/&/g, '&amp;')
@@ -189,7 +194,7 @@
         contentEl.innerHTML =
             '<div class="' + cardClass + '">' +
             '<p class="panel-call-label">' + label + '</p>' +
-            '<h1 class="panel-call-number">#' + escapeHtml(called.ticket_number) + '</h1>' +
+            '<h1 class="panel-call-number">' + ticketNumberHtml(called.ticket_number) + '</h1>' +
             nameHtml +
             '<p class="panel-call-room">Dirija-se a: <strong>' + escapeHtml(called.room || 'A definir') + '</strong></p></div>';
 

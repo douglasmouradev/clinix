@@ -54,6 +54,15 @@ body.panel-tv-body {
     color: #fff;
 }
 
+.panel-tv-main .panel-call-card.is-new {
+    animation: panelTvPulse .7s ease;
+}
+
+@keyframes panelTvPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.1); }
+}
+
 .panel-tv-main .panel-call-idle {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.2);

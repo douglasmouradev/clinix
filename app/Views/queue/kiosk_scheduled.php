@@ -43,7 +43,6 @@ $submitQuery = http_build_query(
                     placeholder="000.000.000-00"
                     required
                     readonly
-                    autofocus
                 >
                 <div class="kiosk-keypad" id="kiosk-keypad" aria-label="Teclado numérico"></div>
                 <div class="kiosk-form-actions">

@@ -89,6 +89,12 @@
     }
 
     buildKeypad();
+    if (cpfInput) {
+        cpfInput.setAttribute('tabindex', '-1');
+        cpfInput.addEventListener('focus', function (event) {
+            event.target.blur();
+        });
+    }
     ['click', 'touchstart', 'keydown', 'input'].forEach(function (ev) {
         document.addEventListener(ev, resetIdleTimer, { passive: true });
     });

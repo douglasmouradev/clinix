@@ -148,6 +148,16 @@ body.kiosk-body {
     text-align: center;
     letter-spacing: 0.06em;
     background: #f8fafc;
+    caret-color: transparent;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.kiosk-form-card input[type="text"]:focus {
+    outline: none;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .kiosk-keypad {
