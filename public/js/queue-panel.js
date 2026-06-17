@@ -122,8 +122,7 @@
     }
 
     function ticketNumberHtml(ticketNumber) {
-        return '<span class="panel-call-hash" aria-hidden="true">#</span>' +
-            '<span class="panel-call-digits">' + escapeHtml(ticketNumber) + '</span>';
+        return escapeHtml(String(ticketNumber || '').replace(/^#/, '').trim());
     }
 
     function escapeHtml(value) {

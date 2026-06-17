@@ -17,7 +17,7 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawu
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Totem — <?= e($clinicName) ?></title>
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/kiosk.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/kiosk.css?v=2">
 </head>
 <body class="kiosk-body" data-kiosk-idle-seconds="45">
     <div class="kiosk-shell">
@@ -67,6 +67,6 @@ $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' . rawu
             <p class="kiosk-privacy">Seus dados são usados apenas para o atendimento de hoje, conforme a LGPD.</p>
         </div>
     </div>
-    <script src="<?= APP_URL ?>/js/kiosk.js" defer></script>
+    <script src="<?= APP_URL ?>/js/kiosk.js?v=2" defer></script>
 </body>
 </html>

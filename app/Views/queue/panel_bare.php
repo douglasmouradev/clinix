@@ -19,8 +19,8 @@ $panelHideNames = !empty($panelHideNames);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Painel — <?= e($clinicName) ?></title>
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel-tv.css">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel.css?v=8">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/panel-tv.css?v=8">
 </head>
 <body class="panel-tv-body">
     <header class="panel-tv-header">
@@ -32,7 +32,7 @@ $panelHideNames = !empty($panelHideNames);
         <?php if ($displayCalled): ?>
             <div class="panel-call-card <?= !empty($displayCalled['live']) ? 'panel-call-active' : 'panel-call-last' ?>">
                 <p class="panel-call-label"><?= !empty($displayCalled['live']) ? 'Senha chamada agora' : 'Última chamada' ?></p>
-                <h1 class="panel-call-number"><span class="panel-call-hash" aria-hidden="true">#</span><span class="panel-call-digits"><?= e((string) $displayCalled['ticket_number']) ?></span></h1>
+                <h1 class="panel-call-number"><?= e((string) $displayCalled['ticket_number']) ?></h1>
                 <?php if (!$panelHideNames): ?>
                     <p class="panel-call-name"><?= e((string) $displayCalled['full_name']) ?></p>
                 <?php endif; ?>
@@ -81,6 +81,6 @@ $panelHideNames = !empty($panelHideNames);
             pollMs: <?= (int) ($panelPollMs ?? 4000) ?>
         };
     </script>
-    <script src="<?= APP_URL ?>/js/queue-panel.js?v=7" defer></script>
+    <script src="<?= APP_URL ?>/js/queue-panel.js?v=8" defer></script>
 </body>
 </html>

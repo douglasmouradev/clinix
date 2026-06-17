@@ -4,7 +4,7 @@
     border-radius: 20px;
     padding: 32px 28px;
     text-align: center;
-    transition: transform .25s ease, box-shadow .25s ease;
+    transition: box-shadow .25s ease;
 }
 .panel-call-active {
     background: linear-gradient(135deg, #eff6ff, #dbeafe);
@@ -28,26 +28,14 @@
 }
 .panel-call-label { margin: 0 0 8px; font-size: clamp(20px, 2.5vw, 26px); color: #475569; text-transform: uppercase; letter-spacing: .08em; }
 .panel-call-number {
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 0.08em;
     margin: 0;
     font-size: clamp(56px, 10vw, 108px);
     color: #1e3a8a;
-    line-height: 1;
+    line-height: 1.05;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
     -webkit-font-smoothing: antialiased;
-    text-rendering: geometricPrecision;
-}
-.panel-call-hash {
-    font-size: 0.62em;
-    font-weight: 800;
-    line-height: 1;
-}
-.panel-call-digits {
-    font-weight: 800;
-    letter-spacing: 0.02em;
 }
 .panel-call-last .panel-call-number { color: #166534; }
 .panel-call-name { margin: 16px 0 8px; font-size: clamp(28px, 5vw, 42px); color: #0f172a; font-weight: 600; }

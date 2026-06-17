@@ -5,6 +5,7 @@
     }
 
     var cpfInput = document.getElementById('kiosk-cpf');
+    var cpfDisplay = document.getElementById('kiosk-cpf-display');
     var keypadEl = document.getElementById('kiosk-keypad');
     var idleSeconds = parseInt(body.getAttribute('data-kiosk-idle-seconds') || '45', 10);
     var idleTimer = null;
@@ -23,14 +24,25 @@
     }
 
     function setCpfDigits(digits) {
-        if (!cpfInput) {
-            return;
+        var normalized = digits.slice(0, 11);
+        var formatted = formatCpf(normalized);
+        if (cpfInput) {
+            cpfInput.value = formatted;
         }
-        cpfInput.value = formatCpf(digits.slice(0, 11));
+        if (cpfDisplay) {
+            cpfDisplay.textContent = formatted || '000.000.000-00';
+            cpfDisplay.classList.toggle('is-empty', normalized.length === 0);
+        }
     }
 
     function currentDigits() {
-        return cpfInput ? cpfInput.value.replace(/\D/g, '') : '';
+        if (cpfInput && cpfInput.value) {
+            return cpfInput.value.replace(/\D/g, '');
+        }
+        if (cpfDisplay) {
+            return cpfDisplay.textContent.replace(/\D/g, '');
+        }
+        return '';
     }
 
     function buildKeypad() {
@@ -89,11 +101,13 @@
     }
 
     buildKeypad();
-    if (cpfInput) {
-        cpfInput.setAttribute('tabindex', '-1');
-        cpfInput.addEventListener('focus', function (event) {
-            event.target.blur();
+    if (cpfDisplay) {
+        cpfDisplay.addEventListener('mousedown', function (event) {
+            event.preventDefault();
         });
+        cpfDisplay.addEventListener('touchstart', function (event) {
+            event.preventDefault();
+        }, { passive: false });
     }
     ['click', 'touchstart', 'keydown', 'input'].forEach(function (ev) {
         document.addEventListener(ev, resetIdleTimer, { passive: true });

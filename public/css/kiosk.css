@@ -147,17 +147,44 @@ body.kiosk-body {
     border-radius: 12px;
     text-align: center;
     letter-spacing: 0.06em;
-    background: #f8fafc;
+    background: #fff;
     caret-color: transparent;
     cursor: default;
     user-select: none;
     -webkit-user-select: none;
 }
 
+.kiosk-cpf-display {
+    width: 100%;
+    font-size: 1.85rem;
+    padding: 16px 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    text-align: center;
+    letter-spacing: 0.06em;
+    background: #fff;
+    color: #0f172a;
+    min-height: 62px;
+    line-height: 1.35;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+.kiosk-cpf-display.is-empty {
+    color: #94a3b8;
+}
+
 .kiosk-form-card input[type="text"]:focus {
     outline: none;
     border-color: #93c5fd;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.kiosk-cpf-display:focus {
+    outline: none;
 }
 
 .kiosk-keypad {
