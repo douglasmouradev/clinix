@@ -39,9 +39,9 @@ p { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
 }
 .brand { color: #fff; font-weight: 700; text-decoration: none; letter-spacing: .02em; font-size: 18px; display: inline-flex; align-items: center; }
-.brand-logo { height: 32px; width: auto; display: block; filter: brightness(0) invert(1); }
+.brand-logo { height: 32px; width: auto; display: block; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-.login-hero-logo { display: block; margin-bottom: 16px; max-width: 220px; width: 100%; height: auto; filter: brightness(0) invert(1); }
+.login-hero-logo { display: block; margin-bottom: 18px; max-width: 240px; width: 100%; height: auto; }
 .menu { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .menu form { margin: 0; display: inline-flex; }
 .menu form button { width: auto; }
@@ -132,6 +132,7 @@ a.link:hover { text-decoration: underline; }
     border: 1px solid rgba(255,255,255,.18);
 }
 .login-hero h2 { color: #fff; font-size: 30px; margin-bottom: 6px; }
+.login-hero-tagline { color: #cbd5e1; font-size: 1rem; margin: 0 0 10px; line-height: 1.55; }
 .login-hero p { color: #cbd5e1; }
 .hero-list { margin-top: 18px; display: grid; gap: 8px; font-size: 14px; }
 .hero-item { background: rgba(15,23,42,.2); border: 1px solid rgba(191,219,254,.25); border-radius: 10px; padding: 8px 10px; }
