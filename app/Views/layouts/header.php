@@ -16,7 +16,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=9">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=10">
     <?php if (str_starts_with((string) $currentRoute, 'queue')): ?>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue.css?v=1">
     <?php endif; ?>

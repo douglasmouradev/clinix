@@ -2,6 +2,20 @@
 <div class="login-shell">
     <div class="login-wrap auth-single">
         <div class="card login-card soft">
+            <div class="portal-login-brand">
+                <span class="login-hero-logo-wrap">
+                    <img
+                        src="<?= APP_URL ?>/img/clinix-logo.png"
+                        srcset="<?= APP_URL ?>/img/clinix-logo.png 369w, <?= APP_URL ?>/img/clinix-logo@2x.png 738w"
+                        sizes="180px"
+                        alt="Clinix"
+                        class="portal-login-logo"
+                        width="369"
+                        height="257"
+                        decoding="async"
+                    >
+                </span>
+            </div>
             <h2>Portal do paciente</h2>
             <p class="muted">Consulte seus agendamentos e retornos previstos.</p>
             <?php if (!empty($error)): ?>
@@ -17,7 +31,7 @@
                 <input type="date" name="birth_date" required>
                 <button class="btn-block" style="margin-top:12px;">Entrar</button>
             </form>
-            <p style="margin-top:12px;"><a class="link" href="<?= APP_URL ?>/?route=login">Área da clínica</a></p>
+            <p class="portal-login-footer"><a class="link" href="<?= APP_URL ?>/?route=login">Área da clínica</a></p>
         </div>
     </div>
 </div>

@@ -1,4 +1,4 @@
-<?php require __DIR__ . '/_layout_start.php'; ?>
+<?php $portalWide = true; require __DIR__ . '/_layout_start.php'; ?>
 <div class="card soft">
     <div class="card-title">
         <div>
