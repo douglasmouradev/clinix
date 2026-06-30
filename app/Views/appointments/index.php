@@ -74,6 +74,10 @@
                         <?php if (in_array((\App\Core\Auth::user()['role'] ?? ''), ['admin', 'reception'], true)): ?>
                             <a class="link" href="<?= APP_URL ?>/?route=appointment.form&id=<?= (int) $appointment['id'] ?>">Editar</a>
                         <?php endif; ?>
+                        <?php if (in_array((\App\Core\Auth::user()['role'] ?? ''), ['admin', 'reception', 'nurse', 'doctor'], true)
+                            && in_array($appointment['status'], ['completed', 'in_progress', 'checked_in'], true)): ?>
+                            <a class="link" href="<?= APP_URL ?>/?route=return.form&source_appointment_id=<?= (int) $appointment['id'] ?>">Retorno</a>
+                        <?php endif; ?>
                         <form method="post" action="<?= APP_URL ?>/?route=appointment.status">
                             <?= csrfInput() ?>
                             <input type="hidden" name="id" value="<?= (int) $appointment['id'] ?>">

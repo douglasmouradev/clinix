@@ -31,6 +31,20 @@ final class DashboardStats
         $stmt->execute(['t' => $tid, 'd' => $today]);
         $recordsToday = (int) $stmt->fetchColumn();
 
+        $returnsOverdue = 0;
+        $returnsPending = 0;
+        try {
+            $stmt = $conn->prepare('SELECT COUNT(*) FROM patient_returns WHERE tenant_id = :t AND status = \'pending\' AND return_due_date < CURDATE()');
+            $stmt->execute(['t' => $tid]);
+            $returnsOverdue = (int) $stmt->fetchColumn();
+
+            $stmt = $conn->prepare('SELECT COUNT(*) FROM patient_returns WHERE tenant_id = :t AND status = \'pending\'');
+            $stmt->execute(['t' => $tid]);
+            $returnsPending = (int) $stmt->fetchColumn();
+        } catch (\Throwable) {
+            // Tabela pode não existir antes da migration.
+        }
+
         $openInvoices = 0;
         if ($role === 'admin') {
             $stmt = $conn->prepare('SELECT COUNT(*) FROM invoices WHERE tenant_id = :t AND status = "open"');
@@ -43,6 +57,8 @@ final class DashboardStats
             'appointments_today' => $appointmentsToday,
             'queue_waiting' => $queueWaiting,
             'records_today' => $recordsToday,
+            'returns_overdue' => $returnsOverdue,
+            'returns_pending' => $returnsPending,
             'open_invoices' => $openInvoices,
         ];
     }

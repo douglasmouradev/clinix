@@ -108,6 +108,21 @@ p { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
 .status-waiting { background: var(--warning-bg); color: var(--warning-ink); }
 .status-called { background: #dbeafe; color: #1e40af; }
 .status-done { background: var(--success-bg); color: var(--success-ink); }
+.status-overdue { background: #fee2e2; color: #b91c1c; }
+.status-muted { background: #e2e8f0; color: #475569; }
+.return-filter-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.return-tab {
+    display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 600;
+    background: #fff;
+}
+.return-tab.active, .return-tab:hover { background: var(--brand-soft); border-color: #9fd4e4; color: var(--brand-dark); }
+.link-btn {
+    background: none; border: none; padding: 0; color: var(--brand-dark); font-weight: 700; cursor: pointer;
+    text-decoration: none; font-size: inherit; min-height: auto;
+}
+.link-btn:hover { text-decoration: underline; }
+.link-btn.danger { color: #b91c1c; }
 .auth-single { max-width: 480px; margin: 0 auto; width: 100%; }
 .skip-link {
     position: absolute; left: -9999px; top: 0; z-index: 100; padding: 10px 14px;

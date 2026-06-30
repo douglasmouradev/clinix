@@ -93,6 +93,30 @@ CREATE TABLE appointments (
     CONSTRAINT fk_appointments_created_by FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
+CREATE TABLE patient_returns (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    tenant_id BIGINT UNSIGNED NOT NULL,
+    patient_id BIGINT UNSIGNED NOT NULL,
+    professional_id BIGINT UNSIGNED DEFAULT NULL,
+    source_appointment_id BIGINT UNSIGNED DEFAULT NULL,
+    appointment_id BIGINT UNSIGNED DEFAULT NULL,
+    return_due_date DATE NOT NULL,
+    status ENUM('pending', 'scheduled', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
+    reason VARCHAR(255) DEFAULT NULL,
+    notes TEXT DEFAULT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_returns_tenant_status_due (tenant_id, status, return_due_date),
+    INDEX idx_returns_tenant_patient (tenant_id, patient_id),
+    CONSTRAINT fk_returns_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    CONSTRAINT fk_returns_patient FOREIGN KEY (patient_id) REFERENCES patients(id),
+    CONSTRAINT fk_returns_professional FOREIGN KEY (professional_id) REFERENCES users(id),
+    CONSTRAINT fk_returns_source_appointment FOREIGN KEY (source_appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    CONSTRAINT fk_returns_appointment FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    CONSTRAINT fk_returns_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
 CREATE TABLE record_documents (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     tenant_id BIGINT UNSIGNED NOT NULL,

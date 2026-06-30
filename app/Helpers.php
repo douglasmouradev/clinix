@@ -50,6 +50,30 @@ function queueDefaultCallRoom(string $role): string
     };
 }
 
+function returnVisitStatusLabel(string $status): string
+{
+    return match ($status) {
+        'pending' => 'Pendente',
+        'overdue' => 'Vencido',
+        'scheduled' => 'Agendado',
+        'completed' => 'Concluído',
+        'cancelled' => 'Cancelado',
+        default => $status,
+    };
+}
+
+function returnVisitStatusBadgeClass(string $status): string
+{
+    return match ($status) {
+        'pending' => 'status-badge status-waiting',
+        'overdue' => 'status-badge status-overdue',
+        'scheduled' => 'status-badge status-called',
+        'completed' => 'status-badge status-done',
+        'cancelled' => 'status-badge status-muted',
+        default => 'status-badge',
+    };
+}
+
 function panelDisplayName(string $fullName, bool $hideNames): string
 {
     $name = trim($fullName);

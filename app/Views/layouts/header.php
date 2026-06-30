@@ -16,7 +16,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=7">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=8">
     <?php if (str_starts_with((string) $currentRoute, 'queue')): ?>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue.css?v=1">
     <?php endif; ?>
@@ -51,6 +51,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
             <?php endif; ?>
             <a class="<?= str_starts_with($currentRoute, 'patient') || $currentRoute === 'patients' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=patients">Pacientes</a>
             <a class="<?= str_starts_with($currentRoute, 'appointment') || $currentRoute === 'appointments' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=appointments">Agenda</a>
+            <a class="<?= str_starts_with($currentRoute, 'return') || $currentRoute === 'returns' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=returns">Retornos</a>
             <a class="<?= $currentRoute === 'queue' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=queue">Fila</a>
             <a class="<?= $currentRoute === 'queue.panel' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=queue.panel">Painel</a>
             <span class="user-chip"><?= e($user['name']) ?> - <?= e(roleLabel($user['role'])) ?></span>
@@ -85,6 +86,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
             <?php endif; ?>
             <a class="side-link <?= str_starts_with($currentRoute, 'patient') || $currentRoute === 'patients' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=patients">Pacientes</a>
             <a class="side-link <?= str_starts_with($currentRoute, 'appointment') || $currentRoute === 'appointments' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=appointments">Agenda</a>
+            <a class="side-link <?= str_starts_with($currentRoute, 'return') || $currentRoute === 'returns' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=returns">Retornos</a>
             <a class="side-link <?= $currentRoute === 'queue' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=queue">Fila</a>
             <a class="side-link <?= $currentRoute === 'queue.panel' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=queue.panel">Painel de chamada</a>
         </nav>
