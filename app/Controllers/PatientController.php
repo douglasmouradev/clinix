@@ -18,7 +18,12 @@ final class PatientController
     {
         Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
         $search = trim((string) ($_GET['q'] ?? ''));
-        $patients = (new Patient())->all($search);
+        try {
+            $patients = (new Patient())->all($search !== '' ? $search : null);
+        } catch (\Throwable) {
+            flash('error', 'Não foi possível carregar a lista de pacientes. Verifique se as migrations foram aplicadas.');
+            $patients = [];
+        }
         View::render('patients/index', ['patients' => $patients, 'search' => $search]);
     }
 
@@ -26,9 +31,13 @@ final class PatientController
     {
         Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
         $search = trim((string) ($_GET['q'] ?? ''));
-        jsonResponse([
-            'data' => (new Patient())->search($search !== '' ? $search : null, 20),
-        ]);
+        try {
+            $data = (new Patient())->search($search !== '' ? $search : null, 20);
+        } catch (\Throwable $exception) {
+            jsonResponse(['ok' => false, 'error' => 'Não foi possível buscar pacientes.', 'data' => []], 500);
+        }
+
+        jsonResponse(['ok' => true, 'data' => $data]);
     }
 
     public function form(): void

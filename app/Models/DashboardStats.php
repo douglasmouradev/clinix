@@ -24,9 +24,15 @@ final class DashboardStats
         $todayEnd = date('Y-m-d 23:59:59');
         $conn = Database::connection();
 
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :t AND anonymized_at IS NULL');
-        $stmt->execute(['t' => $tid]);
-        $patients = (int) $stmt->fetchColumn();
+        try {
+            $stmt = $conn->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :t AND anonymized_at IS NULL');
+            $stmt->execute(['t' => $tid]);
+            $patients = (int) $stmt->fetchColumn();
+        } catch (\Throwable) {
+            $stmt = $conn->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :t');
+            $stmt->execute(['t' => $tid]);
+            $patients = (int) $stmt->fetchColumn();
+        }
 
         $stmt = $conn->prepare(
             'SELECT COUNT(*) FROM appointments WHERE tenant_id = :t AND scheduled_at >= :start AND scheduled_at <= :end'

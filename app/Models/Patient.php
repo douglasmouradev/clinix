@@ -12,6 +12,22 @@ final class Patient
     public const WALK_IN_CPF = '00000000000';
     public const PRIORITY_CPF = '00000000001';
 
+    private static ?bool $hasAnonymizedColumn = null;
+
+    private function anonymizedSql(): string
+    {
+        if (self::$hasAnonymizedColumn === null) {
+            try {
+                $row = Database::connection()->query("SHOW COLUMNS FROM patients LIKE 'anonymized_at'")->fetch();
+                self::$hasAnonymizedColumn = (bool) $row;
+            } catch (\Throwable) {
+                self::$hasAnonymizedColumn = false;
+            }
+        }
+
+        return self::$hasAnonymizedColumn ? ' AND anonymized_at IS NULL' : '';
+    }
+
     public function all(?string $search = null): array
     {
         return $this->search($search, 500);
@@ -20,14 +36,15 @@ final class Patient
     /** @return list<array<string, mixed>> */
     public function search(?string $search = null, int $limit = 20): array
     {
-        $limit = max(1, min($limit, 100));
+        $limit = max(1, min($limit, 500));
         $connection = Database::connection();
+        $anonymized = $this->anonymizedSql();
 
         if ($search === null || trim($search) === '') {
             $stmt = $connection->prepare(
                 'SELECT id, full_name, cpf, phone, birth_date
                  FROM patients
-                 WHERE tenant_id = :tenant_id AND anonymized_at IS NULL
+                 WHERE tenant_id = :tenant_id' . $anonymized . '
                  ORDER BY full_name
                  LIMIT ' . $limit
             );
@@ -38,8 +55,7 @@ final class Patient
 
         $sql = 'SELECT id, full_name, cpf, phone, birth_date
                 FROM patients
-                WHERE tenant_id = :tenant_id
-                  AND anonymized_at IS NULL
+                WHERE tenant_id = :tenant_id' . $anonymized . '
                   AND (full_name LIKE :search OR cpf LIKE :search OR phone LIKE :search)
                 ORDER BY full_name
                 LIMIT ' . $limit;
@@ -58,7 +74,7 @@ final class Patient
 
         $stmt = Database::connection()->prepare(
             'SELECT * FROM patients
-             WHERE cpf = :cpf AND birth_date = :birth_date AND tenant_id = :tenant_id AND anonymized_at IS NULL
+             WHERE cpf = :cpf AND birth_date = :birth_date AND tenant_id = :tenant_id' . $this->anonymizedSql() . '
              LIMIT 1'
         );
         $stmt->execute([
@@ -87,7 +103,7 @@ final class Patient
         }
 
         $stmt = Database::connection()->prepare(
-            'SELECT * FROM patients WHERE cpf = :cpf AND tenant_id = :tenant_id AND anonymized_at IS NULL LIMIT 1'
+            'SELECT * FROM patients WHERE cpf = :cpf AND tenant_id = :tenant_id' . $this->anonymizedSql() . ' LIMIT 1'
         );
         $stmt->execute(['cpf' => $cpf, 'tenant_id' => tenantId()]);
         $patient = $stmt->fetch();
