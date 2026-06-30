@@ -43,7 +43,7 @@ final class Appointment
         return $row ?: null;
     }
 
-    public function create(array $data): void
+    public function create(array $data): int
     {
         $sql = 'INSERT INTO appointments (tenant_id, patient_id, professional_id, scheduled_at, status, reason, notes, confirm_token, created_by)
                 VALUES (:tenant_id, :patient_id, :professional_id, :scheduled_at, :status, :reason, :notes, :confirm_token, :created_by)';
@@ -52,6 +52,8 @@ final class Appointment
             'tenant_id' => tenantId(),
             'confirm_token' => bin2hex(random_bytes(16)),
         ]);
+
+        return (int) Database::connection()->lastInsertId();
     }
 
     public function week(string $startDate): array
@@ -132,6 +134,25 @@ final class Appointment
                 LIMIT 1';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['tenant_id' => tenantId(), 'patient_id' => $patientId]);
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function findForPatient(int $appointmentId, int $patientId): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT a.*, u.name AS professional_name
+             FROM appointments a
+             LEFT JOIN users u ON u.id = a.professional_id
+             WHERE a.id = :id AND a.patient_id = :patient_id AND a.tenant_id = :tenant_id
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'id' => $appointmentId,
+            'patient_id' => $patientId,
+            'tenant_id' => tenantId(),
+        ]);
         $row = $stmt->fetch();
 
         return $row ?: null;

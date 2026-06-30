@@ -116,27 +116,45 @@ final class BillingController
             $object = $event['data']['object'] ?? [];
             $tenantId = (int) ($object['metadata']['tenant_id'] ?? $object['client_reference_id'] ?? 0);
             $planId = (int) ($object['metadata']['plan_id'] ?? 0);
+            $customerId = (string) ($object['customer'] ?? '');
+            $subscriptionId = (string) ($object['subscription'] ?? '');
             if ($tenantId > 0 && $planId > 0) {
-                $_SESSION['tenant_context_id'] = $tenantId;
                 $billing->changePlan($tenantId, $planId);
                 $billing->markSubscriptionActive($tenantId);
+                if ($customerId !== '' && $subscriptionId !== '') {
+                    $billing->saveStripeIds($tenantId, $customerId, $subscriptionId);
+                }
             }
         }
 
         if ($type === 'invoice.paid') {
             $object = $event['data']['object'] ?? [];
             $stripeId = (string) ($object['id'] ?? '');
+            $subscriptionId = (string) ($object['subscription'] ?? '');
+            $tenantId = $billing->findTenantIdByStripeSubscription($subscriptionId);
             $invoice = $billing->findOpenInvoiceByStripeId($stripeId);
             if ($invoice) {
                 $billing->markInvoicePaid((int) $invoice['id'], $stripeId);
                 $billing->markSubscriptionActive((int) $invoice['tenant_id']);
+            } elseif ($tenantId !== null) {
+                $billing->markSubscriptionActive($tenantId);
             }
         }
 
         if ($type === 'invoice.payment_failed') {
             $object = $event['data']['object'] ?? [];
-            $tenantId = (int) ($object['metadata']['tenant_id'] ?? 0);
-            if ($tenantId > 0) {
+            $subscriptionId = (string) ($object['subscription'] ?? '');
+            $tenantId = $billing->findTenantIdByStripeSubscription($subscriptionId);
+            if ($tenantId !== null) {
+                $billing->markSubscriptionPastDue($tenantId);
+            }
+        }
+
+        if ($type === 'customer.subscription.deleted') {
+            $object = $event['data']['object'] ?? [];
+            $subscriptionId = (string) ($object['id'] ?? '');
+            $tenantId = $billing->findTenantIdByStripeSubscription($subscriptionId);
+            if ($tenantId !== null) {
                 $billing->markSubscriptionPastDue($tenantId);
             }
         }

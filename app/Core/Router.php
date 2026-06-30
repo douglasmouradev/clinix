@@ -97,13 +97,17 @@ final class Router
             'record.document.delete' => ['class' => \App\Controllers\RecordController::class, 'method' => 'deleteDocument', 'http' => ['POST'], 'roles' => ['admin', 'nurse', 'doctor']],
             'cron.retention' => ['class' => \App\Controllers\CronController::class, 'method' => 'retention', 'http' => ['GET', 'POST'], 'public' => true],
             'api.v1.patients' => ['class' => \App\Controllers\ApiController::class, 'method' => 'patients', 'http' => ['GET'], 'public' => true],
+            'api.v1.patients.create' => ['class' => \App\Controllers\ApiController::class, 'method' => 'patientsCreate', 'http' => ['POST'], 'public' => true],
             'api.v1.queue' => ['class' => \App\Controllers\ApiController::class, 'method' => 'queue', 'http' => ['GET'], 'public' => true],
             'api.v1.appointments' => ['class' => \App\Controllers\ApiController::class, 'method' => 'appointments', 'http' => ['GET'], 'public' => true],
+            'api.v1.appointments.status' => ['class' => \App\Controllers\ApiController::class, 'method' => 'appointmentsStatus', 'http' => ['POST'], 'public' => true],
             'api.v1.returns' => ['class' => \App\Controllers\ApiController::class, 'method' => 'returns', 'http' => ['GET'], 'public' => true],
             'portal' => ['class' => \App\Controllers\PortalController::class, 'method' => 'loginForm', 'http' => ['GET'], 'public' => true],
             'portal.login' => ['class' => \App\Controllers\PortalController::class, 'method' => 'login', 'http' => ['POST'], 'public' => true],
             'portal.home' => ['class' => \App\Controllers\PortalController::class, 'method' => 'home', 'http' => ['GET'], 'public' => true],
             'portal.logout' => ['class' => \App\Controllers\PortalController::class, 'method' => 'logout', 'http' => ['POST'], 'public' => true],
+            'portal.appointment.confirm' => ['class' => \App\Controllers\PortalController::class, 'method' => 'confirmAppointment', 'http' => ['POST'], 'public' => true],
+            'portal.appointment.cancel' => ['class' => \App\Controllers\PortalController::class, 'method' => 'cancelAppointment', 'http' => ['POST'], 'public' => true],
         ];
     }
 

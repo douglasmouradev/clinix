@@ -149,5 +149,37 @@ final class Billing
         $row = $stmt->fetch();
         return $row ?: null;
     }
+
+    public function saveStripeIds(int $tenantId, string $customerId, string $subscriptionId): void
+    {
+        $stmt = Database::connection()->prepare(
+            'UPDATE tenant_subscriptions
+             SET stripe_customer_id = :customer_id, stripe_subscription_id = :subscription_id
+             WHERE tenant_id = :tenant_id AND status IN ("active", "past_due")
+             ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute([
+            'tenant_id' => $tenantId,
+            'customer_id' => $customerId,
+            'subscription_id' => $subscriptionId,
+        ]);
+    }
+
+    public function findTenantIdByStripeSubscription(string $subscriptionId): ?int
+    {
+        if ($subscriptionId === '') {
+            return null;
+        }
+
+        $stmt = Database::connection()->prepare(
+            'SELECT tenant_id FROM tenant_subscriptions
+             WHERE stripe_subscription_id = :subscription_id
+             ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute(['subscription_id' => $subscriptionId]);
+        $tenantId = $stmt->fetchColumn();
+
+        return $tenantId !== false ? (int) $tenantId : null;
+    }
 }
 

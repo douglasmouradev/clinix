@@ -92,22 +92,23 @@ final class Lgpd
         $days = (int) ($policy['retention_days'] ?? LGPD_RETENTION_DAYS_DEFAULT);
         $days = max(30, $days);
 
-        $sql = 'UPDATE patients p
-                SET p.full_name = CONCAT("ANON-", p.id),
-                    p.cpf = LPAD(p.id, 11, "0"),
-                    p.birth_date = "1900-01-01",
-                    p.phone = NULL,
-                    p.address = NULL,
-                    p.medical_history = "Dados anonimizados por política de retenção LGPD.",
-                    p.anonymized_at = NOW()
-                WHERE p.tenant_id = :tenant_id
-                  AND p.anonymized_at IS NULL
-                  AND p.updated_at < DATE_SUB(NOW(), INTERVAL :retention_days DAY)';
-        $stmt = Database::connection()->prepare($sql);
-        $stmt->bindValue(':tenant_id', tenantId(), \PDO::PARAM_INT);
-        $stmt->bindValue(':retention_days', $days, \PDO::PARAM_INT);
-        $stmt->execute();
-        $affected = $stmt->rowCount();
+        $select = Database::connection()->prepare(
+            'SELECT id FROM patients
+             WHERE tenant_id = :tenant_id
+               AND anonymized_at IS NULL
+               AND updated_at < DATE_SUB(NOW(), INTERVAL :retention_days DAY)'
+        );
+        $select->bindValue(':tenant_id', tenantId(), \PDO::PARAM_INT);
+        $select->bindValue(':retention_days', $days, \PDO::PARAM_INT);
+        $select->execute();
+        $ids = array_map('intval', $select->fetchAll(\PDO::FETCH_COLUMN));
+
+        $patientModel = new Patient();
+        foreach ($ids as $id) {
+            $patientModel->anonymizeCascade($id);
+        }
+
+        $affected = count($ids);
 
         if ($affected > 0 && $requestedBy !== null) {
             $log = Database::connection()->prepare('INSERT INTO audit_logs (tenant_id, user_id, action, details, ip_address)

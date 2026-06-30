@@ -47,7 +47,7 @@ jobs:
       - name: PHPUnit
         run: |
           composer install --no-interaction --prefer-dist
-          ./vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress || true
+          ./vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress
           ./vendor/bin/phpunit
 
       - name: Smoke test

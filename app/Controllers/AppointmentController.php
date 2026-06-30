@@ -80,8 +80,9 @@ final class AppointmentController
             auditLog('appointment.update', 'Agendamento ID ' . $id . ' atualizado');
             flash('success', 'Agendamento atualizado.');
         } else {
-            $model->create($data);
+            $newId = $model->create($data);
             auditLog('appointment.create', 'Novo agendamento criado');
+            $this->notifyAppointmentCreated($newId, $data['patient_id'], $data['scheduled_at'], $data['reason']);
             flash('success', 'Agendamento criado com sucesso.');
         }
 
@@ -123,10 +124,36 @@ final class AppointmentController
         echo '<p style="color:#64748b;font-size:14px;">Clinix</p></body></html>';
     }
 
+    private function notifyAppointmentCreated(int $appointmentId, int $patientId, string $scheduledAt, string $reason): void
+    {
+        $appointment = (new Appointment())->find($appointmentId);
+        $patient = (new Patient())->find($patientId);
+        if ($appointment === null || $patient === null) {
+            return;
+        }
+
+        $confirmUrl = APP_URL . '/?route=appointment.confirm&token=' . urlencode((string) $appointment['confirm_token']);
+        $when = formatDateTimeBr($scheduledAt);
+        $body = "Olá " . ($patient['full_name'] ?? 'paciente') . ",\n\n"
+            . "Sua consulta foi agendada para {$when}."
+            . ($reason !== '' ? "\nMotivo: {$reason}" : '')
+            . "\n\nConfirme sua presença pelo link:\n{$confirmUrl}\n\nClinix";
+
+        $notifier = new Notification();
+        $recipient = $this->patientNotificationRecipient($patient);
+        $channel = $recipient['channel'];
+        $address = $recipient['address'];
+
+        if ($address !== '') {
+            $notifier->schedule($channel, $address, 'Confirme sua consulta - Clinix', $body, date('Y-m-d H:i:s'));
+        }
+        $notifier->schedule('log', $address !== '' ? $address : 'sem-contato', 'Confirme sua consulta', $body, date('Y-m-d H:i:s'));
+    }
+
     private function scheduleReminder(int $patientId, string $scheduledAt, string $reason): void
     {
         $patient = (new Patient())->find($patientId);
-        if (!$patient || empty($patient['phone'])) {
+        if ($patient === null) {
             return;
         }
 
@@ -137,7 +164,27 @@ final class AppointmentController
 
         $body = 'Lembrete Clinix: consulta em ' . formatDateTimeBr($scheduledAt) . ($reason !== '' ? ' — ' . $reason : '');
         $notifier = new Notification();
-        $notifier->schedule('whatsapp', (string) $patient['phone'], 'Lembrete de consulta', $body, $reminderAt);
-        $notifier->schedule('log', (string) $patient['phone'], 'Lembrete de consulta', $body, $reminderAt);
+        $recipient = $this->patientNotificationRecipient($patient);
+
+        if ($recipient['address'] !== '') {
+            $notifier->schedule($recipient['channel'], $recipient['address'], 'Lembrete de consulta', $body, $reminderAt);
+        }
+        $notifier->schedule('log', $recipient['address'] !== '' ? $recipient['address'] : 'sem-contato', 'Lembrete de consulta', $body, $reminderAt);
+    }
+
+    /** @return array{channel: string, address: string} */
+    private function patientNotificationRecipient(array $patient): array
+    {
+        $email = trim((string) ($patient['email'] ?? ''));
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['channel' => 'email', 'address' => $email];
+        }
+
+        $phone = trim((string) ($patient['phone'] ?? ''));
+        if ($phone !== '') {
+            return ['channel' => 'log', 'address' => $phone];
+        }
+
+        return ['channel' => 'log', 'address' => ''];
     }
 }

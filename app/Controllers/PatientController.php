@@ -18,13 +18,18 @@ final class PatientController
     {
         Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
         $search = trim((string) ($_GET['q'] ?? ''));
+        $page = max(1, (int) ($_GET['page'] ?? 1));
         try {
-            $patients = (new Patient())->all($search !== '' ? $search : null);
+            $result = (new Patient())->paginate($search !== '' ? $search : null, $page, 25);
         } catch (\Throwable) {
             flash('error', 'Não foi possível carregar a lista de pacientes. Verifique se as migrations foram aplicadas.');
-            $patients = [];
+            $result = ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 25];
         }
-        View::render('patients/index', ['patients' => $patients, 'search' => $search]);
+        View::render('patients/index', [
+            'patients' => $result['items'],
+            'search' => $search,
+            'pagination' => $result,
+        ]);
     }
 
     public function search(): void
@@ -79,6 +84,7 @@ final class PatientController
             'birth_date' => $_POST['birth_date'] ?? '',
             'sex' => $_POST['sex'] ?? '',
             'phone' => trim($_POST['phone'] ?? ''),
+            'email' => trim($_POST['email'] ?? '') ?: null,
             'cep' => $addressData['cep'],
             'address' => $addressData['address'],
             'medical_history' => trim($_POST['medical_history'] ?? ''),
@@ -264,7 +270,7 @@ final class PatientController
         Auth::requireRole(['admin']);
         $patientId = (int) ($_POST['id'] ?? 0);
         if ($patientId > 0) {
-            (new Patient())->anonymize($patientId);
+            (new Patient())->anonymizeCascade($patientId);
             (new Lgpd())->logRequest($patientId, (int) (Auth::user()['id'] ?? 0), 'anonymize', 'Anonimização LGPD');
             auditLog('lgpd.anonymize', 'Anonimização de dados do paciente ID ' . $patientId);
             flash('success', 'Paciente anonimizado conforme LGPD.');

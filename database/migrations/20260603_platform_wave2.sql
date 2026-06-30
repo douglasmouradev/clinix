@@ -1,0 +1,2 @@
+ALTER TABLE patients
+    ADD COLUMN email VARCHAR(180) DEFAULT NULL AFTER phone;

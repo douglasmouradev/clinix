@@ -39,6 +39,11 @@
                 <label>Telefone</label>
                 <input name="phone" value="<?= e($patient['phone'] ?? '') ?>" placeholder="(00) 00000-0000">
             </div>
+            <div>
+                <label>E-mail</label>
+                <input type="email" name="email" value="<?= e($patient['email'] ?? '') ?>" placeholder="paciente@email.com">
+                <small class="muted">Usado para confirmação e lembretes de consulta.</small>
+            </div>
         </div>
 
         <div class="address-block" data-app-url="<?= e(APP_URL) ?>" style="margin-top:10px;">

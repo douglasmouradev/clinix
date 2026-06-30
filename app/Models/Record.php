@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\DocumentStorage;
 
 final class Record
 {
@@ -173,6 +174,33 @@ final class Record
         );
         $stmt->execute(['record_id' => $recordId, 'tenant_id' => tenantId()]);
         return $stmt->fetchAll();
+    }
+
+    public function purgePatientClinicalData(int $patientId): void
+    {
+        $connection = Database::connection();
+        $docsStmt = $connection->prepare(
+            'SELECT rd.file_path
+             FROM record_documents rd
+             INNER JOIN patient_records pr ON pr.id = rd.record_id
+             WHERE pr.patient_id = :patient_id AND pr.tenant_id = :tenant_id'
+        );
+        $docsStmt->execute(['patient_id' => $patientId, 'tenant_id' => tenantId()]);
+        foreach ($docsStmt->fetchAll() as $doc) {
+            DocumentStorage::delete((string) $doc['file_path']);
+        }
+
+        $connection->prepare(
+            'DELETE rd FROM record_documents rd
+             INNER JOIN patient_records pr ON pr.id = rd.record_id
+             WHERE pr.patient_id = :patient_id AND pr.tenant_id = :tenant_id'
+        )->execute(['patient_id' => $patientId, 'tenant_id' => tenantId()]);
+
+        $connection->prepare(
+            'UPDATE patient_records
+             SET content = "[Dados clínicos anonimizados por LGPD]", structured_data = NULL
+             WHERE patient_id = :patient_id AND tenant_id = :tenant_id'
+        )->execute(['patient_id' => $patientId, 'tenant_id' => tenantId()]);
     }
 }
 

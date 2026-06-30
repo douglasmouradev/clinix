@@ -71,3 +71,27 @@
     </table>
 </div>
 
+<?php
+$pagination = $pagination ?? null;
+if (is_array($pagination) && ($pagination['total'] ?? 0) > ($pagination['per_page'] ?? 25)):
+    $totalPages = (int) ceil($pagination['total'] / $pagination['per_page']);
+    $currentPage = (int) ($pagination['page'] ?? 1);
+    $queryBase = APP_URL . '/?route=patients' . ($search !== '' ? '&q=' . rawurlencode((string) $search) : '');
+?>
+<div class="card" style="margin-top:12px;">
+    <div class="actions" style="justify-content:space-between;">
+        <span class="muted">
+            <?= (int) $pagination['total'] ?> paciente(s) — página <?= $currentPage ?> de <?= $totalPages ?>
+        </span>
+        <div class="actions">
+            <?php if ($currentPage > 1): ?>
+                <a class="btn secondary small" href="<?= $queryBase ?>&page=<?= $currentPage - 1 ?>">Anterior</a>
+            <?php endif; ?>
+            <?php if ($currentPage < $totalPages): ?>
+                <a class="btn secondary small" href="<?= $queryBase ?>&page=<?= $currentPage + 1 ?>">Próxima</a>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+

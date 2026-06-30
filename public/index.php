@@ -58,6 +58,8 @@ $csrfExempt = [
     'queue.kiosk.priority',
     'portal.login',
     'portal.logout',
+    'api.v1.patients.create',
+    'api.v1.appointments.status',
 ];
 if ($httpMethod === 'POST' && !in_array($route, $csrfExempt, true)) {
     verifyCsrf();

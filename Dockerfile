@@ -1,6 +1,9 @@
 FROM php:8.2-apache
 
 RUN docker-php-ext-install pdo pdo_mysql \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite headers
 
 WORKDIR /var/www/html

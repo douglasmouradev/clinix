@@ -14,6 +14,7 @@ final class Patient
 
     private static ?bool $hasAnonymizedColumn = null;
     private static ?bool $hasCepColumn = null;
+    private static ?bool $hasEmailColumn = null;
 
     private function anonymizedSql(): string
     {
@@ -41,6 +42,61 @@ final class Patient
         }
 
         return self::$hasCepColumn;
+    }
+
+    private function hasEmailColumn(): bool
+    {
+        if (self::$hasEmailColumn === null) {
+            try {
+                $row = Database::connection()->query("SHOW COLUMNS FROM patients LIKE 'email'")->fetch();
+                self::$hasEmailColumn = (bool) $row;
+            } catch (\Throwable) {
+                self::$hasEmailColumn = false;
+            }
+        }
+
+        return self::$hasEmailColumn;
+    }
+
+    /** @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int} */
+    public function paginate(?string $search = null, int $page = 1, int $perPage = 25): array
+    {
+        $page = max(1, $page);
+        $perPage = max(10, min($perPage, 100));
+        $offset = ($page - 1) * $perPage;
+        $connection = Database::connection();
+        $anonymized = $this->anonymizedSql();
+        $params = ['tenant_id' => tenantId()];
+        $where = 'tenant_id = :tenant_id' . $anonymized;
+
+        if ($search !== null && trim($search) !== '') {
+            $searchClause = 'full_name LIKE :search OR cpf LIKE :search OR phone LIKE :search';
+            if ($this->hasEmailColumn()) {
+                $searchClause .= ' OR email LIKE :search';
+            }
+            $where .= ' AND (' . $searchClause . ')';
+            $params['search'] = '%' . trim($search) . '%';
+        }
+
+        $countStmt = $connection->prepare('SELECT COUNT(*) FROM patients WHERE ' . $where);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $emailCol = $this->hasEmailColumn() ? ', email' : '';
+        $sql = 'SELECT id, full_name, cpf, phone' . $emailCol . ', birth_date
+                FROM patients
+                WHERE ' . $where . '
+                ORDER BY full_name
+                LIMIT ' . $perPage . ' OFFSET ' . $offset;
+        $stmt = $connection->prepare($sql);
+        $stmt->execute($params);
+
+        return [
+            'items' => $stmt->fetchAll(),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
     }
 
     public function all(?string $search = null): array
@@ -181,13 +237,22 @@ final class Patient
     public function create(array $data): int
     {
         $connection = Database::connection();
-        $cepSql = $this->hasCepColumn() ? ', cep' : '';
-        $cepVal = $this->hasCepColumn() ? ', :cep' : '';
-        $sql = 'INSERT INTO patients (tenant_id, full_name, cpf, birth_date, sex, phone' . $cepSql . ', address, medical_history, lgpd_consent_at, lgpd_consent_version) 
-                VALUES (:tenant_id, :full_name, :cpf, :birth_date, :sex, :phone' . $cepVal . ', :address, :medical_history, :lgpd_consent_at, :lgpd_consent_version)';
-        if (!$this->hasCepColumn()) {
+        $extraCols = '';
+        $extraVals = '';
+        if ($this->hasCepColumn()) {
+            $extraCols .= ', cep';
+            $extraVals .= ', :cep';
+        } else {
             unset($data['cep']);
         }
+        if ($this->hasEmailColumn()) {
+            $extraCols .= ', email';
+            $extraVals .= ', :email';
+        } else {
+            unset($data['email']);
+        }
+        $sql = 'INSERT INTO patients (tenant_id, full_name, cpf, birth_date, sex, phone' . $extraCols . ', address, medical_history, lgpd_consent_at, lgpd_consent_version) 
+                VALUES (:tenant_id, :full_name, :cpf, :birth_date, :sex, :phone' . $extraVals . ', :address, :medical_history, :lgpd_consent_at, :lgpd_consent_version)';
         $stmt = $connection->prepare($sql);
         $stmt->execute(['tenant_id' => tenantId()] + $data);
 
@@ -197,12 +262,19 @@ final class Patient
     public function update(int $id, array $data): void
     {
         $data['id'] = $id;
-        $cepSet = $this->hasCepColumn() ? ', cep = :cep' : '';
-        if (!$this->hasCepColumn()) {
+        $extraSet = '';
+        if ($this->hasCepColumn()) {
+            $extraSet .= ', cep = :cep';
+        } else {
             unset($data['cep']);
         }
+        if ($this->hasEmailColumn()) {
+            $extraSet .= ', email = :email';
+        } else {
+            unset($data['email']);
+        }
         $sql = 'UPDATE patients 
-                SET full_name = :full_name, cpf = :cpf, birth_date = :birth_date, sex = :sex, phone = :phone' . $cepSet . ',
+                SET full_name = :full_name, cpf = :cpf, birth_date = :birth_date, sex = :sex, phone = :phone' . $extraSet . ',
                     address = :address, medical_history = :medical_history, lgpd_consent_at = :lgpd_consent_at, lgpd_consent_version = :lgpd_consent_version
                 WHERE id = :id AND tenant_id = :tenant_id';
         $data['tenant_id'] = tenantId();
@@ -253,16 +325,37 @@ final class Patient
 
     public function anonymize(int $id): void
     {
+        $cepSet = $this->hasCepColumn() ? ', cep = NULL' : '';
+        $emailSet = $this->hasEmailColumn() ? ', email = NULL' : '';
         $sql = 'UPDATE patients
                 SET full_name = CONCAT("ANON-", id),
                     cpf = LPAD(id, 11, "0"),
                     birth_date = "1900-01-01",
-                    phone = NULL,
+                    phone = NULL' . $cepSet . $emailSet . ',
                     address = NULL,
                     medical_history = "Dados anonimizados por LGPD.",
                     anonymized_at = NOW()
                 WHERE id = :id AND tenant_id = :tenant_id';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
+    }
+
+    public function anonymizeCascade(int $id): void
+    {
+        if ($this->find($id) === null) {
+            return;
+        }
+
+        foreach ($this->documentsByPatientId($id) as $doc) {
+            \App\Core\DocumentStorage::delete((string) $doc['file_path']);
+        }
+
+        $connection = Database::connection();
+        $connection->prepare(
+            'DELETE FROM patient_documents WHERE patient_id = :patient_id AND tenant_id = :tenant_id'
+        )->execute(['patient_id' => $id, 'tenant_id' => tenantId()]);
+
+        (new Record())->purgePatientClinicalData($id);
+        $this->anonymize($id);
     }
 }

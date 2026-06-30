@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\View;
 use App\Models\DashboardStats;
+use App\Models\Tenant;
 
 final class DashboardController
 {
@@ -14,6 +15,11 @@ final class DashboardController
     {
         $user = Auth::user();
         $stats = (new DashboardStats())->forRole((string) ($user['role'] ?? ''));
-        View::render('dashboard/index', ['user' => $user, 'stats' => $stats]);
+        $tenant = (new Tenant())->find((int) ($user['tenant_id'] ?? tenantId()));
+        View::render('dashboard/index', [
+            'user' => $user,
+            'stats' => $stats,
+            'tenant_slug' => (string) ($tenant['slug'] ?? ''),
+        ]);
     }
 }
