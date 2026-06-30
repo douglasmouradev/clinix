@@ -13,8 +13,22 @@ use App\Models\User;
 
 final class ReturnController
 {
+    private function requireTable(): bool
+    {
+        if (ReturnVisit::tableExists()) {
+            return true;
+        }
+
+        View::render('returns/setup_required');
+        return false;
+    }
+
     public function index(): void
     {
+        if (!$this->requireTable()) {
+            return;
+        }
+
         $filter = trim((string) ($_GET['filter'] ?? ''));
         $search = trim((string) ($_GET['q'] ?? ''));
         $from = trim((string) ($_GET['from'] ?? ''));
@@ -38,6 +52,10 @@ final class ReturnController
 
     public function form(): void
     {
+        if (!$this->requireTable()) {
+            return;
+        }
+
         $id = (int) ($_GET['id'] ?? 0);
         $model = new ReturnVisit();
         $returnVisit = $id > 0 ? $model->find($id) : null;
@@ -92,6 +110,10 @@ final class ReturnController
     {
         verifyCsrf();
 
+        if (!$this->requireTable()) {
+            return;
+        }
+
         $id = (int) ($_POST['id'] ?? 0);
         $data = [
             'patient_id' => (int) ($_POST['patient_id'] ?? 0),
@@ -139,6 +161,10 @@ final class ReturnController
 
     public function scheduleForm(): void
     {
+        if (!$this->requireTable()) {
+            return;
+        }
+
         $id = (int) ($_GET['id'] ?? 0);
         $returnVisit = (new ReturnVisit())->find($id);
 
@@ -160,6 +186,10 @@ final class ReturnController
     public function schedule(): void
     {
         verifyCsrf();
+
+        if (!$this->requireTable()) {
+            return;
+        }
 
         $id = (int) ($_POST['id'] ?? 0);
         $scheduledAt = trim((string) ($_POST['scheduled_at'] ?? ''));
@@ -218,6 +248,10 @@ final class ReturnController
     public function updateStatus(): void
     {
         verifyCsrf();
+
+        if (!$this->requireTable()) {
+            return;
+        }
 
         $id = (int) ($_POST['id'] ?? 0);
         $status = (string) ($_POST['status'] ?? '');

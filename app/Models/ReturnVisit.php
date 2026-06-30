@@ -8,6 +8,16 @@ use App\Core\Database;
 
 final class ReturnVisit
 {
+    public static function tableExists(): bool
+    {
+        try {
+            $stmt = Database::connection()->query("SHOW TABLES LIKE 'patient_returns'");
+            return (bool) $stmt->fetch();
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     /** @return list<array<string, mixed>> */
     public function list(?string $filter = null, ?string $search = null, ?string $from = null, ?string $to = null): array
     {
