@@ -39,11 +39,52 @@
                 <label>Telefone</label>
                 <input name="phone" value="<?= e($patient['phone'] ?? '') ?>" placeholder="(00) 00000-0000">
             </div>
-            <div>
-                <label>Endereço</label>
-                <input name="address" value="<?= e($patient['address'] ?? '') ?>">
+        </div>
+
+        <div class="address-block" style="margin-top:10px;">
+            <h3 class="address-block-title">Endereço</h3>
+            <div class="grid grid-2">
+                <div>
+                    <label>CEP</label>
+                    <input
+                        type="text"
+                        name="cep"
+                        id="cep-input"
+                        inputmode="numeric"
+                        maxlength="9"
+                        value="<?= e(formatCep($patient['cep'] ?? '')) ?>"
+                        placeholder="00000-000"
+                    >
+                    <small id="cep-status" class="cep-status" aria-live="polite"></small>
+                </div>
+                <div>
+                    <label>Logradouro</label>
+                    <input name="address_street" id="address-street" value="<?= e($patient['address_street'] ?? ($patient['address'] ?? '')) ?>" placeholder="Rua, avenida...">
+                </div>
+                <div>
+                    <label>Número</label>
+                    <input name="address_number" id="address-number" value="<?= e($patient['address_number'] ?? '') ?>" placeholder="Ex.: 36">
+                </div>
+                <div>
+                    <label>Complemento</label>
+                    <input name="address_complement" id="address-complement" value="<?= e($patient['address_complement'] ?? '') ?>" placeholder="Apto, bloco...">
+                </div>
+                <div>
+                    <label>Bairro</label>
+                    <input name="address_neighborhood" id="address-neighborhood" value="<?= e($patient['address_neighborhood'] ?? '') ?>">
+                </div>
+                <div>
+                    <label>Cidade</label>
+                    <input name="address_city" id="address-city" value="<?= e($patient['address_city'] ?? '') ?>">
+                </div>
+                <div>
+                    <label>UF</label>
+                    <input name="address_state" id="address-state" maxlength="2" value="<?= e($patient['address_state'] ?? '') ?>" placeholder="RJ">
+                </div>
             </div>
         </div>
+        <script src="<?= APP_URL ?>/js/cep-autofill.js?v=1"></script>
+
         <div style="margin-top:10px;">
             <label>Histórico médico basico</label>
             <textarea name="medical_history"><?= e($patient['medical_history'] ?? '') ?></textarea>

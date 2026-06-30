@@ -1,0 +1,2 @@
+ALTER TABLE patients
+    ADD COLUMN cep CHAR(8) DEFAULT NULL AFTER phone;

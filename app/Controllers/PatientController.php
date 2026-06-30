@@ -55,13 +55,15 @@ final class PatientController
         Auth::requireRole(['admin', 'reception']);
 
         $id = (int) ($_POST['id'] ?? 0);
+        $addressData = buildPatientAddressFromRequest($_POST);
         $data = [
             'full_name' => trim($_POST['full_name'] ?? ''),
             'cpf' => preg_replace('/\D+/', '', $_POST['cpf'] ?? ''),
             'birth_date' => $_POST['birth_date'] ?? '',
             'sex' => $_POST['sex'] ?? '',
             'phone' => trim($_POST['phone'] ?? ''),
-            'address' => trim($_POST['address'] ?? ''),
+            'cep' => $addressData['cep'],
+            'address' => $addressData['address'],
             'medical_history' => trim($_POST['medical_history'] ?? ''),
             'lgpd_consent_at' => !empty($_POST['lgpd_consent']) ? date('Y-m-d H:i:s') : null,
             'lgpd_consent_version' => !empty($_POST['lgpd_consent']) ? 'v1.0' : null,
@@ -69,7 +71,10 @@ final class PatientController
 
         $data['cpf'] = CpfValidator::normalize($data['cpf']);
         if ($data['full_name'] === '' || !CpfValidator::isValid($data['cpf'])) {
-            View::render('patients/form', ['patient' => array_merge(['id' => $id], $data), 'error' => 'Nome e CPF válido são obrigatórios.']);
+            View::render('patients/form', [
+                'patient' => array_merge(['id' => $id], $data, patientAddressFieldsFromRequest($_POST)),
+                'error' => 'Nome e CPF válido são obrigatórios.',
+            ]);
             return;
         }
 
@@ -87,7 +92,7 @@ final class PatientController
         } else {
             if (!(new \App\Models\Billing())->canCreatePatient(tenantId())) {
                 View::render('patients/form', [
-                    'patient' => array_merge(['id' => 0], $data),
+                    'patient' => array_merge(['id' => 0], $data, patientAddressFieldsFromRequest($_POST)),
                     'error' => 'Limite de pacientes do plano atingido ou assinatura irregular. Verifique Billing.',
                 ]);
                 return;

@@ -13,6 +13,7 @@ final class Patient
     public const PRIORITY_CPF = '00000000001';
 
     private static ?bool $hasAnonymizedColumn = null;
+    private static ?bool $hasCepColumn = null;
 
     private function anonymizedSql(): string
     {
@@ -26,6 +27,20 @@ final class Patient
         }
 
         return self::$hasAnonymizedColumn ? ' AND anonymized_at IS NULL' : '';
+    }
+
+    private function hasCepColumn(): bool
+    {
+        if (self::$hasCepColumn === null) {
+            try {
+                $row = Database::connection()->query("SHOW COLUMNS FROM patients LIKE 'cep'")->fetch();
+                self::$hasCepColumn = (bool) $row;
+            } catch (\Throwable) {
+                self::$hasCepColumn = false;
+            }
+        }
+
+        return self::$hasCepColumn;
     }
 
     public function all(?string $search = null): array
@@ -166,8 +181,13 @@ final class Patient
     public function create(array $data): int
     {
         $connection = Database::connection();
-        $sql = 'INSERT INTO patients (tenant_id, full_name, cpf, birth_date, sex, phone, address, medical_history, lgpd_consent_at, lgpd_consent_version) 
-                VALUES (:tenant_id, :full_name, :cpf, :birth_date, :sex, :phone, :address, :medical_history, :lgpd_consent_at, :lgpd_consent_version)';
+        $cepSql = $this->hasCepColumn() ? ', cep' : '';
+        $cepVal = $this->hasCepColumn() ? ', :cep' : '';
+        $sql = 'INSERT INTO patients (tenant_id, full_name, cpf, birth_date, sex, phone' . $cepSql . ', address, medical_history, lgpd_consent_at, lgpd_consent_version) 
+                VALUES (:tenant_id, :full_name, :cpf, :birth_date, :sex, :phone' . $cepVal . ', :address, :medical_history, :lgpd_consent_at, :lgpd_consent_version)';
+        if (!$this->hasCepColumn()) {
+            unset($data['cep']);
+        }
         $stmt = $connection->prepare($sql);
         $stmt->execute(['tenant_id' => tenantId()] + $data);
 
@@ -177,8 +197,12 @@ final class Patient
     public function update(int $id, array $data): void
     {
         $data['id'] = $id;
+        $cepSet = $this->hasCepColumn() ? ', cep = :cep' : '';
+        if (!$this->hasCepColumn()) {
+            unset($data['cep']);
+        }
         $sql = 'UPDATE patients 
-                SET full_name = :full_name, cpf = :cpf, birth_date = :birth_date, sex = :sex, phone = :phone, 
+                SET full_name = :full_name, cpf = :cpf, birth_date = :birth_date, sex = :sex, phone = :phone' . $cepSet . ',
                     address = :address, medical_history = :medical_history, lgpd_consent_at = :lgpd_consent_at, lgpd_consent_version = :lgpd_consent_version
                 WHERE id = :id AND tenant_id = :tenant_id';
         $data['tenant_id'] = tenantId();

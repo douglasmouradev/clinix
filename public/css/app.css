@@ -138,6 +138,11 @@ p { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
 .patient-picker-empty { padding: 12px; color: #64748b; font-size: 13px; }
 .portal-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .portal-list li { padding: 12px; border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 4px; }
+.address-block-title { margin: 0 0 10px; font-size: 1rem; color: var(--brand-dark); }
+.cep-status { display: block; margin-top: 6px; font-size: 12px; min-height: 16px; }
+.cep-status--loading { color: #64748b; }
+.cep-status--success { color: var(--success-ink); }
+.cep-status--error { color: #b91c1c; }
 .auth-single { max-width: 480px; margin: 0 auto; width: 100%; }
 .skip-link {
     position: absolute; left: -9999px; top: 0; z-index: 100; padding: 10px 14px;

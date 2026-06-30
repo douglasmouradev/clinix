@@ -224,6 +224,65 @@ function formatDateTimeBr(?string $dateTime): string
     return date('d/m/Y H:i', $timestamp);
 }
 
+function formatCep(?string $cep): string
+{
+    $digits = preg_replace('/\D+/', '', (string) $cep) ?? '';
+    if (strlen($digits) !== 8) {
+        return (string) $cep;
+    }
+
+    return substr($digits, 0, 5) . '-' . substr($digits, 5);
+}
+
+/** @return array{cep: ?string, address: ?string} */
+function buildPatientAddressFromRequest(array $input): array
+{
+    $cep = preg_replace('/\D+/', '', (string) ($input['cep'] ?? ''));
+    if (strlen($cep) !== 8) {
+        $cep = '';
+    }
+
+    $street = trim((string) ($input['address_street'] ?? ''));
+    $number = trim((string) ($input['address_number'] ?? ''));
+    $complement = trim((string) ($input['address_complement'] ?? ''));
+    $neighborhood = trim((string) ($input['address_neighborhood'] ?? ''));
+    $city = trim((string) ($input['address_city'] ?? ''));
+    $state = strtoupper(trim((string) ($input['address_state'] ?? '')));
+
+    $line1 = implode(', ', array_filter([
+        $street,
+        $number !== '' ? 'nº ' . $number : '',
+        $complement,
+    ]));
+    $cityState = $city;
+    if ($city !== '' && $state !== '') {
+        $cityState = $city . '/' . $state;
+    } elseif ($state !== '') {
+        $cityState = $state;
+    }
+    $line2 = implode(' - ', array_filter([$neighborhood, $cityState]));
+
+    $address = trim(implode(' - ', array_filter([$line1, $line2])));
+
+    return [
+        'cep' => $cep !== '' ? $cep : null,
+        'address' => $address !== '' ? $address : null,
+    ];
+}
+
+/** @return array<string, string> */
+function patientAddressFieldsFromRequest(array $input): array
+{
+    return [
+        'address_street' => trim((string) ($input['address_street'] ?? '')),
+        'address_number' => trim((string) ($input['address_number'] ?? '')),
+        'address_complement' => trim((string) ($input['address_complement'] ?? '')),
+        'address_neighborhood' => trim((string) ($input['address_neighborhood'] ?? '')),
+        'address_city' => trim((string) ($input['address_city'] ?? '')),
+        'address_state' => strtoupper(trim((string) ($input['address_state'] ?? ''))),
+    ];
+}
+
 function wantsJson(): bool
 {
     $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');

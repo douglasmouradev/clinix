@@ -31,6 +31,7 @@ CREATE TABLE patients (
     birth_date DATE NOT NULL,
     sex VARCHAR(20) NOT NULL,
     phone VARCHAR(20) DEFAULT NULL,
+    cep CHAR(8) DEFAULT NULL,
     address VARCHAR(180) DEFAULT NULL,
     medical_history TEXT DEFAULT NULL,
     lgpd_consent_at DATETIME DEFAULT NULL,
