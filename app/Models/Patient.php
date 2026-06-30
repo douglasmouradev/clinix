@@ -14,20 +14,61 @@ final class Patient
 
     public function all(?string $search = null): array
     {
+        return $this->search($search, 500);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function search(?string $search = null, int $limit = 20): array
+    {
+        $limit = max(1, min($limit, 100));
         $connection = Database::connection();
+
         if ($search === null || trim($search) === '') {
-            $stmt = $connection->prepare('SELECT * FROM patients WHERE tenant_id = :tenant_id ORDER BY full_name');
+            $stmt = $connection->prepare(
+                'SELECT id, full_name, cpf, phone, birth_date
+                 FROM patients
+                 WHERE tenant_id = :tenant_id AND anonymized_at IS NULL
+                 ORDER BY full_name
+                 LIMIT ' . $limit
+            );
             $stmt->execute(['tenant_id' => tenantId()]);
+
             return $stmt->fetchAll();
         }
 
-        $sql = 'SELECT * FROM patients 
+        $sql = 'SELECT id, full_name, cpf, phone, birth_date
+                FROM patients
                 WHERE tenant_id = :tenant_id
+                  AND anonymized_at IS NULL
                   AND (full_name LIKE :search OR cpf LIKE :search OR phone LIKE :search)
-                ORDER BY full_name';
+                ORDER BY full_name
+                LIMIT ' . $limit;
         $stmt = $connection->prepare($sql);
         $stmt->execute(['tenant_id' => tenantId(), 'search' => '%' . trim($search) . '%']);
+
         return $stmt->fetchAll();
+    }
+
+    public function findByCpfAndBirthDate(string $cpf, string $birthDate): ?array
+    {
+        $cpf = CpfValidator::normalize($cpf);
+        if (strlen($cpf) !== 11 || trim($birthDate) === '') {
+            return null;
+        }
+
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM patients
+             WHERE cpf = :cpf AND birth_date = :birth_date AND tenant_id = :tenant_id AND anonymized_at IS NULL
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'cpf' => $cpf,
+            'birth_date' => $birthDate,
+            'tenant_id' => tenantId(),
+        ]);
+        $patient = $stmt->fetch();
+
+        return $patient ?: null;
     }
 
     public function find(int $id): ?array

@@ -35,10 +35,15 @@ final class AppointmentController
     {
         $id = (int) ($_GET['id'] ?? 0);
         $appointment = $id > 0 ? (new Appointment())->find($id) : null;
+        $selectedPatientName = '';
+        if ($appointment !== null && (int) ($appointment['patient_id'] ?? 0) > 0) {
+            $patient = (new Patient())->find((int) $appointment['patient_id']);
+            $selectedPatientName = (string) ($patient['full_name'] ?? '');
+        }
 
         View::render('appointments/form', [
             'appointment' => $appointment,
-            'patients' => (new Patient())->all(),
+            'selectedPatientName' => $selectedPatientName,
             'doctors' => (new User())->doctors(),
         ]);
     }

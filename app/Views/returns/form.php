@@ -15,15 +15,12 @@
         <?php endif; ?>
         <div class="grid grid-2">
             <div>
-                <label>Paciente</label>
-                <select name="patient_id" required>
-                    <option value="">Selecione</option>
-                    <?php foreach ($patients as $patient): ?>
-                        <option value="<?= (int) $patient['id'] ?>" <?= ((int) ($returnVisit['patient_id'] ?? 0) === (int) $patient['id']) ? 'selected' : '' ?>>
-                            <?= e($patient['full_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php
+                $selectedPatientId = (int) ($returnVisit['patient_id'] ?? 0);
+                $selectedPatientName = (string) ($selectedPatientName ?? '');
+                $inputId = 'return-patient-picker';
+                include __DIR__ . '/../partials/patient_picker.php';
+                ?>
             </div>
             <div>
                 <label>Profissional</label>
@@ -54,3 +51,4 @@
         </div>
     </form>
 </div>
+<script src="<?= APP_URL ?>/js/patient-picker.js?v=1"></script>

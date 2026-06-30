@@ -4,27 +4,29 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Core\Database;
+use App\Core\ApiAuth;
+use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Queue;
+use App\Models\ReturnVisit;
 
 final class ApiController
 {
     public function patients(): void
     {
-        if (!$this->authorize()) {
+        if (ApiAuth::authorize('patients') === null) {
             jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
         $search = trim((string) ($_GET['q'] ?? ''));
         jsonResponse([
-            'data' => (new Patient())->all($search !== '' ? $search : null),
+            'data' => (new Patient())->search($search !== '' ? $search : null, 100),
         ]);
     }
 
     public function queue(): void
     {
-        if (!$this->authorize()) {
+        if (ApiAuth::authorize('queue') === null) {
             jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
@@ -34,39 +36,28 @@ final class ApiController
         ]);
     }
 
-    private function authorize(): bool
+    public function appointments(): void
     {
-        $token = $this->resolveApiToken();
-        if ($token === '') {
-            return false;
+        if (ApiAuth::authorize('appointments') === null) {
+            jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
-        $hash = hash('sha256', $token);
-        $stmt = Database::connection()->prepare(
-            'SELECT tenant_id FROM api_tokens WHERE token_hash = :hash AND is_active = 1 LIMIT 1'
-        );
-        $stmt->execute(['hash' => $hash]);
-        $tenantId = $stmt->fetchColumn();
-        if (!$tenantId) {
-            return false;
-        }
-
-        $_SESSION['tenant_context_id'] = (int) $tenantId;
-        return true;
+        $date = trim((string) ($_GET['date'] ?? date('Y-m-d')));
+        $status = trim((string) ($_GET['status'] ?? ''));
+        jsonResponse([
+            'data' => (new Appointment())->all($date, $status !== '' ? $status : null),
+        ]);
     }
 
-    private function resolveApiToken(): string
+    public function returns(): void
     {
-        $header = trim((string) ($_SERVER['HTTP_X_API_TOKEN'] ?? ''));
-        if ($header !== '') {
-            return $header;
+        if (ApiAuth::authorize('returns') === null) {
+            jsonResponse(['error' => 'Unauthorized'], 401);
         }
 
-        $auth = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
-        if (preg_match('/^Bearer\s+(\S+)$/i', $auth, $matches) === 1) {
-            return $matches[1];
-        }
-
-        return '';
+        $filter = trim((string) ($_GET['filter'] ?? ''));
+        jsonResponse([
+            'data' => (new ReturnVisit())->list($filter !== '' ? $filter : null),
+        ]);
     }
 }

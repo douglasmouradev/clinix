@@ -46,7 +46,11 @@
                 </div>
                 <button class="btn-block">Entrar</button>
             </form>
-            <p style="margin-top:12px;text-align:center;"><a class="link" href="<?= APP_URL ?>/?route=password.forgot&tenant=<?= urlencode($tenant_slug ?? '') ?>">Esqueci minha senha</a></p>
+            <p style="margin-top:12px;text-align:center;">
+                <a class="link" href="<?= APP_URL ?>/?route=password.forgot&tenant=<?= urlencode($tenant_slug ?? '') ?>">Esqueci minha senha</a>
+                ·
+                <a class="link" href="<?= APP_URL ?>/?route=portal&tenant=<?= urlencode($tenant_slug ?? '') ?>">Portal do paciente</a>
+            </p>
         </div>
     </div>
 </div>

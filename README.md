@@ -83,10 +83,16 @@ Sistema SaaS para clínicas de pequeno e médio porte, com autenticação por se
 
 ## API REST (token)
 
-Headers: `X-Api-Token: seu-token` (cadastre em Admin → API)
+Headers: `X-Api-Token: seu-token` (cadastre em Admin → API). Rate limit: 120 req/min.
 
 - `GET /?route=api.v1.patients&q=busca`
 - `GET /?route=api.v1.queue`
+- `GET /?route=api.v1.appointments&date=YYYY-MM-DD`
+- `GET /?route=api.v1.returns&filter=overdue`
+
+## Portal do paciente
+
+- `/?route=portal&tenant=SLUG` — CPF + data de nascimento para ver consultas e retornos.
 
 ## Como rodar (local)
 

@@ -19,15 +19,18 @@ spl_autoload_register(static function (string $class): void {
 
 header('Content-Type: application/json; charset=utf-8');
 
+$pending = \App\Core\MigrationStatus::pending();
+
 try {
     $pdo = \App\Core\Database::connection();
     $stmt = $pdo->query('SELECT 1');
     $ok = (int) $stmt->fetchColumn() === 1;
-    http_response_code($ok ? 200 : 500);
+    http_response_code($ok && $pending === [] ? 200 : 503);
     echo json_encode([
-        'status' => $ok ? 'ok' : 'error',
+        'status' => $ok && $pending === [] ? 'ok' : 'degraded',
         'app' => APP_NAME,
         'db' => $ok ? 'up' : 'down',
+        'migrations_pending' => $pending,
         'time' => date('c'),
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $exception) {
@@ -36,8 +39,8 @@ try {
         'status' => 'error',
         'app' => APP_NAME,
         'db' => 'down',
+        'migrations_pending' => $pending,
         'message' => 'Database unavailable',
         'time' => date('c'),
     ], JSON_UNESCAPED_UNICODE);
 }
-

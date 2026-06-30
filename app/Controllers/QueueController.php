@@ -25,7 +25,6 @@ final class QueueController
     {
         Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
         $queue = (new Queue())->ticketsForManage();
-        $patients = (new Patient())->all();
         $tenant = (new Tenant())->find(tenantId());
         $kioskUrl = '';
         $role = (string) Auth::user()['role'];
@@ -39,7 +38,6 @@ final class QueueController
         }
         View::render('queue/index', [
             'queue' => $queue,
-            'patients' => $patients,
             'role' => $role,
             'csrfToken' => csrfToken(),
             'clinicName' => (string) ($tenant['name'] ?? APP_NAME),
@@ -51,10 +49,28 @@ final class QueueController
     public function data(): void
     {
         Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
+        $queueModel = new Queue();
+        $queue = $queueModel->ticketsForManage();
+        $called = $queueModel->currentCalled();
+        $revision = $this->queueRevision($queue, $called);
+        $clientRevision = trim((string) ($_GET['revision'] ?? ''));
+
+        if ($clientRevision !== '' && hash_equals($revision, $clientRevision)) {
+            jsonResponse([
+                'ok' => true,
+                'unchanged' => true,
+                'revision' => $revision,
+                'waiting_count' => $queueModel->waitingCount(),
+            ]);
+            return;
+        }
+
         jsonResponse([
             'ok' => true,
-            'queue' => $this->serializeQueue((new Queue())->ticketsForManage()),
-            'waiting_count' => (new Queue())->waitingCount(),
+            'unchanged' => false,
+            'revision' => $revision,
+            'queue' => $this->serializeQueue($queue),
+            'waiting_count' => $queueModel->waitingCount(),
         ]);
     }
 
@@ -524,7 +540,7 @@ final class QueueController
         $this->resolvePanelTenantFromRequest();
 
         if (Auth::check()) {
-            return true;
+            return $this->authorizedTenantContext();
         }
 
         $token = $this->requestKioskToken();
@@ -563,13 +579,23 @@ final class QueueController
         $this->resolvePanelTenantFromRequest();
 
         if (Auth::check()) {
-            return true;
+            return $this->authorizedTenantContext();
         }
 
         $token = trim((string) ($_GET['token'] ?? ''));
         $expectedToken = $this->panelToken();
 
         return $token !== '' && hash_equals($expectedToken, $token);
+    }
+
+    private function authorizedTenantContext(): bool
+    {
+        $userTenant = (int) ($_SESSION['user']['tenant_id'] ?? 0);
+        if ($userTenant <= 0) {
+            return false;
+        }
+
+        return $userTenant === tenantId();
     }
 
     private function resolvePanelTenantFromRequest(): void
@@ -672,6 +698,20 @@ final class QueueController
         $this->cachedPanelToken = DeviceTokens::panelToken(tenantId());
 
         return $this->cachedPanelToken;
+    }
+
+    /** @param list<array<string, mixed>> $queue */
+    private function queueRevision(array $queue, ?array $called): string
+    {
+        $parts = [];
+        foreach ($queue as $ticket) {
+            $parts[] = (int) $ticket['id'] . ':' . (string) ($ticket['status'] ?? '') . ':' . (string) ($ticket['room'] ?? '');
+        }
+        if ($called !== null) {
+            $parts[] = 'called:' . (int) $called['id'] . ':' . (string) ($called['called_at'] ?? '');
+        }
+
+        return md5(implode('|', $parts));
     }
 
     /** @param array<string, mixed> $ticket */

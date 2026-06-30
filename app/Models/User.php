@@ -18,7 +18,7 @@ final class User
 
     public function find(int $id): ?array
     {
-        $sql = 'SELECT id, name, username, role, is_active, tenant_id FROM users WHERE id = :id AND tenant_id = :tenant_id LIMIT 1';
+        $sql = 'SELECT id, name, username, email, role, is_active, tenant_id FROM users WHERE id = :id AND tenant_id = :tenant_id LIMIT 1';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
         $user = $stmt->fetch();
@@ -27,7 +27,7 @@ final class User
 
     public function findByUsername(string $username): ?array
     {
-        $sql = 'SELECT id, name, username, password_hash, role, is_active, tenant_id,
+        $sql = 'SELECT id, name, username, email, password_hash, role, is_active, tenant_id,
                        must_change_password, two_factor_enabled, two_factor_secret
                 FROM users WHERE username = :username AND tenant_id = :tenant_id LIMIT 1';
         $stmt = Database::connection()->prepare($sql);
@@ -51,7 +51,7 @@ final class User
 
     public function create(array $data): void
     {
-        $sql = 'INSERT INTO users (tenant_id, name, username, password_hash, role, is_active) VALUES (:tenant_id, :name, :username, :password_hash, :role, :is_active)';
+        $sql = 'INSERT INTO users (tenant_id, name, username, email, password_hash, role, is_active) VALUES (:tenant_id, :name, :username, :email, :password_hash, :role, :is_active)';
         $data['tenant_id'] = tenantId();
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute($data);
@@ -60,7 +60,7 @@ final class User
     public function update(int $id, array $data): void
     {
         $data['id'] = $id;
-        $sql = 'UPDATE users SET name = :name, username = :username, role = :role, is_active = :is_active WHERE id = :id AND tenant_id = :tenant_id';
+        $sql = 'UPDATE users SET name = :name, username = :username, email = :email, role = :role, is_active = :is_active WHERE id = :id AND tenant_id = :tenant_id';
         $data['tenant_id'] = tenantId();
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute($data);

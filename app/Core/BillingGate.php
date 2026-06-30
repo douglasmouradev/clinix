@@ -23,7 +23,7 @@ final class BillingGate
         }
 
         if ((new Billing())->isPastDue(tenantId())) {
-            flash('error', 'Assinatura em atraso. Regularize o pagamento em Billing para continuar.');
+            flash('error', 'Assinatura em atraso. Regularize o pagamento em Assinatura para continuar.');
             redirect('/?route=billing');
         }
     }

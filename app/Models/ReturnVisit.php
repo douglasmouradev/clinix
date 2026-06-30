@@ -181,4 +181,42 @@ final class ReturnVisit
 
         return (int) $stmt->fetchColumn();
     }
+
+    /** @return list<array<string, mixed>> */
+    public function pendingForPatient(int $patientId): array
+    {
+        return array_values(array_filter(
+            $this->list('pending'),
+            static fn (array $row): bool => (int) $row['patient_id'] === $patientId
+        ));
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function overdueNeedingReminder(): array
+    {
+        if (!self::tableExists()) {
+            return [];
+        }
+
+        $sql = 'SELECT r.*, p.full_name AS patient_name, p.phone AS patient_phone
+                FROM patient_returns r
+                INNER JOIN patients p ON p.id = r.patient_id
+                WHERE r.tenant_id = :tenant_id
+                  AND r.status = \'pending\'
+                  AND r.return_due_date <= CURDATE()
+                  AND (r.notes IS NULL OR r.notes NOT LIKE \'%[reminder_sent]%\' )';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId()]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function markReminderSent(int $id): void
+    {
+        $sql = 'UPDATE patient_returns
+                SET notes = CONCAT(COALESCE(notes, \'\'), \' [reminder_sent]\')
+                WHERE id = :id AND tenant_id = :tenant_id';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['id' => $id, 'tenant_id' => tenantId()]);
+    }
 }

@@ -40,6 +40,10 @@ $roles = ['admin', 'reception', 'nurse', 'doctor'];
                 </select>
             </div>
             <div>
+                <label>E-mail</label>
+                <input type="email" name="email" value="<?= e($editUser['email'] ?? '') ?>" placeholder="para recuperação de senha">
+            </div>
+            <div>
                 <label>Senha <?= !empty($editUser['id']) ? '(deixe em branco para manter)' : '' ?></label>
                 <input type="password" name="password" <?= empty($editUser['id']) ? 'required' : '' ?>>
             </div>

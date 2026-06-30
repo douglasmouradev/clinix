@@ -21,6 +21,11 @@ foreach ($dirs as $dir) {
 echo "==> DB migrations"
 php database/migrate.php >/dev/null
 
+if [[ -f vendor/bin/phpstan ]]; then
+    echo "==> PHPStan"
+    ./vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress
+fi
+
 if [[ -f vendor/bin/phpunit ]]; then
     echo "==> PHPUnit"
     ./vendor/bin/phpunit

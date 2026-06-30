@@ -11,30 +11,47 @@ final class DashboardStats
     /** @return array<string, int> */
     public function forRole(string $role): array
     {
+        return cacheRemember('dashboard_stats_' . tenantId() . '_' . $role, 45, function () use ($role): array {
+            return $this->computeForRole($role);
+        });
+    }
+
+    /** @return array<string, int> */
+    private function computeForRole(string $role): array
+    {
         $tid = tenantId();
-        $today = date('Y-m-d');
+        $todayStart = date('Y-m-d 00:00:00');
+        $todayEnd = date('Y-m-d 23:59:59');
         $conn = Database::connection();
 
         $stmt = $conn->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :t AND anonymized_at IS NULL');
         $stmt->execute(['t' => $tid]);
         $patients = (int) $stmt->fetchColumn();
 
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM appointments WHERE tenant_id = :t AND DATE(scheduled_at) = :d');
-        $stmt->execute(['t' => $tid, 'd' => $today]);
+        $stmt = $conn->prepare(
+            'SELECT COUNT(*) FROM appointments WHERE tenant_id = :t AND scheduled_at >= :start AND scheduled_at <= :end'
+        );
+        $stmt->execute(['t' => $tid, 'start' => $todayStart, 'end' => $todayEnd]);
         $appointmentsToday = (int) $stmt->fetchColumn();
 
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM queue_tickets WHERE tenant_id = :t AND status = "waiting" AND DATE(created_at) = :d');
-        $stmt->execute(['t' => $tid, 'd' => $today]);
+        $stmt = $conn->prepare(
+            'SELECT COUNT(*) FROM queue_tickets WHERE tenant_id = :t AND status = "waiting" AND created_at >= :start AND created_at <= :end'
+        );
+        $stmt->execute(['t' => $tid, 'start' => $todayStart, 'end' => $todayEnd]);
         $queueWaiting = (int) $stmt->fetchColumn();
 
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM patient_records WHERE tenant_id = :t AND DATE(created_at) = :d');
-        $stmt->execute(['t' => $tid, 'd' => $today]);
+        $stmt = $conn->prepare(
+            'SELECT COUNT(*) FROM patient_records WHERE tenant_id = :t AND created_at >= :start AND created_at <= :end'
+        );
+        $stmt->execute(['t' => $tid, 'start' => $todayStart, 'end' => $todayEnd]);
         $recordsToday = (int) $stmt->fetchColumn();
 
         $returnsOverdue = 0;
         $returnsPending = 0;
         try {
-            $stmt = $conn->prepare('SELECT COUNT(*) FROM patient_returns WHERE tenant_id = :t AND status = \'pending\' AND return_due_date < CURDATE()');
+            $stmt = $conn->prepare(
+                'SELECT COUNT(*) FROM patient_returns WHERE tenant_id = :t AND status = \'pending\' AND return_due_date < CURDATE()'
+            );
             $stmt->execute(['t' => $tid]);
             $returnsOverdue = (int) $stmt->fetchColumn();
 
@@ -42,7 +59,6 @@ final class DashboardStats
             $stmt->execute(['t' => $tid]);
             $returnsPending = (int) $stmt->fetchColumn();
         } catch (\Throwable) {
-            // Tabela pode não existir antes da migration.
         }
 
         $openInvoices = 0;

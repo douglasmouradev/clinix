@@ -31,6 +31,12 @@ final class BillingController
 
     public function changePlan(): void
     {
+        if (StripeClient::isConfigured()) {
+            flash('error', 'Com Stripe ativo, altere o plano apenas pelo checkout de pagamento.');
+            redirect('/?route=billing');
+            return;
+        }
+
         $planId = (int) ($_POST['plan_id'] ?? 0);
         if ($planId > 0) {
             (new Billing())->changePlan(tenantId(), $planId);

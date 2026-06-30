@@ -165,5 +165,24 @@ final class Appointment
 
         return (int) $stmt->fetchColumn() > 0;
     }
+
+    /** @return list<array<string, mixed>> */
+    public function upcomingForPatient(int $patientId, int $limit = 20): array
+    {
+        $sql = 'SELECT a.*, p.full_name AS patient_name, u.name AS professional_name
+                FROM appointments a
+                INNER JOIN patients p ON p.id = a.patient_id
+                LEFT JOIN users u ON u.id = a.professional_id
+                WHERE a.tenant_id = :tenant_id
+                  AND a.patient_id = :patient_id
+                  AND a.scheduled_at >= CURDATE()
+                  AND a.status IN ("scheduled", "checked_in")
+                ORDER BY a.scheduled_at ASC
+                LIMIT ' . max(1, min($limit, 50));
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute(['tenant_id' => tenantId(), 'patient_id' => $patientId]);
+
+        return $stmt->fetchAll();
+    }
 }
 

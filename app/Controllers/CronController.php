@@ -36,12 +36,39 @@ final class CronController
         }
 
         $notifications = (new Notification())->processDue();
+        $returnReminders = $this->processReturnReminders();
 
         jsonResponse([
             'ok' => true,
             'retention_processed' => $processed,
             'notifications_sent' => $notifications,
+            'return_reminders' => $returnReminders,
             'time' => date('c'),
         ]);
+    }
+
+    private function processReturnReminders(): int
+    {
+        if (!\App\Models\ReturnVisit::tableExists()) {
+            return 0;
+        }
+
+        $sent = 0;
+        $notifier = new Notification();
+        $returnModel = new \App\Models\ReturnVisit();
+
+        foreach ($returnModel->overdueNeedingReminder() as $row) {
+            $_SESSION['tenant_context_id'] = (int) $row['tenant_id'];
+            $phone = trim((string) ($row['patient_phone'] ?? ''));
+            $body = 'Clinix: retorno previsto para ' . formatDateBr((string) $row['return_due_date'])
+                . '. Entre em contato para agendar.';
+            if ($phone !== '') {
+                $notifier->schedule('log', $phone, 'Retorno pendente', $body, date('Y-m-d H:i:s'));
+            }
+            $returnModel->markReminderSent((int) $row['id']);
+            $sent++;
+        }
+
+        return $sent;
     }
 }

@@ -101,9 +101,22 @@ final class ReturnController
 
         View::render('returns/form', [
             'returnVisit' => $returnVisit,
-            'patients' => (new Patient())->all(),
+            'selectedPatientName' => $this->patientNameForReturn($returnVisit),
             'doctors' => (new User())->doctors(),
         ]);
+    }
+
+    /** @param array<string, mixed> $returnVisit */
+    private function patientNameForReturn(array $returnVisit): string
+    {
+        $patientId = (int) ($returnVisit['patient_id'] ?? 0);
+        if ($patientId <= 0) {
+            return '';
+        }
+
+        $patient = (new Patient())->find($patientId);
+
+        return (string) ($patient['full_name'] ?? '');
     }
 
     public function save(): void

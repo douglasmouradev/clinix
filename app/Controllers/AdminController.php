@@ -44,6 +44,7 @@ final class AdminController
         $id = (int) ($_POST['id'] ?? 0);
         $name = trim($_POST['name'] ?? '');
         $username = trim($_POST['username'] ?? '');
+        $email = trim((string) ($_POST['email'] ?? ''));
         $role = $_POST['role'] ?? '';
         $password = $_POST['password'] ?? '';
         $isActive = isset($_POST['is_active']) ? 1 : 0;
@@ -103,7 +104,13 @@ final class AdminController
                 return;
             }
 
-            $userModel->update($id, ['name' => $name, 'username' => $username, 'role' => $role, 'is_active' => $isActive]);
+            $userModel->update($id, [
+                'name' => $name,
+                'username' => $username,
+                'email' => $email !== '' ? $email : null,
+                'role' => $role,
+                'is_active' => $isActive,
+            ]);
             if ($password !== '') {
                 $policyError = PasswordPolicy::validate($password);
                 if ($policyError !== null) {
@@ -130,6 +137,7 @@ final class AdminController
             $userModel->create([
                 'name' => $name,
                 'username' => $username,
+                'email' => $email !== '' ? $email : null,
                 'password_hash' => PasswordPolicy::hash($password),
                 'role' => $role,
                 'is_active' => $isActive,

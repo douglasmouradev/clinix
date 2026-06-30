@@ -22,6 +22,15 @@ final class PatientController
         View::render('patients/index', ['patients' => $patients, 'search' => $search]);
     }
 
+    public function search(): void
+    {
+        Auth::requireRole(['admin', 'reception', 'nurse', 'doctor']);
+        $search = trim((string) ($_GET['q'] ?? ''));
+        jsonResponse([
+            'data' => (new Patient())->search($search !== '' ? $search : null, 20),
+        ]);
+    }
+
     public function form(): void
     {
         Auth::requireRole(['admin', 'reception']);

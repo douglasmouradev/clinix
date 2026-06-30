@@ -11,8 +11,8 @@ $invoices = $invoices ?? [];
 <div class="card soft">
     <div class="card-title">
         <div>
-            <h2>Billing e Planos</h2>
-            <p class="muted">Gerencie assinatura, limites e faturas do tenant.</p>
+            <h2>Assinatura e planos</h2>
+            <p class="muted">Gerencie assinatura, limites e faturas da clínica.</p>
         </div>
     </div>
 </div>
@@ -45,11 +45,13 @@ $invoices = $invoices ?? [];
                     <input type="hidden" name="plan_id" value="<?= (int) $plan['id'] ?>">
                     <button class="btn small" style="width:auto;"><?= !empty($stripeEnabled) ? 'Pagar com Stripe' : 'Checkout (demo)' ?></button>
                 </form>
+                <?php if (empty($stripeEnabled)): ?>
                 <form method="post" action="<?= APP_URL ?>/?route=billing.plan.change">
                     <?= csrfInput() ?>
                     <input type="hidden" name="plan_id" value="<?= (int) $plan['id'] ?>">
-                    <button class="btn secondary small" style="width:auto;">Alterar local</button>
+                    <button class="btn secondary small" style="width:auto;">Alterar plano (demo)</button>
                 </form>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
     </div>

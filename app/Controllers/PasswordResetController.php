@@ -33,18 +33,26 @@ final class PasswordResetController
         $_SESSION['tenant_context_id'] = (int) $tenant['id'];
         $user = (new User())->findByUsername($username);
         if ($user) {
-            $token = (new PasswordReset())->createToken((int) $user['id'], (int) $tenant['id']);
-            $link = APP_URL . '/?route=password.reset&token=' . urlencode($token) . '&tenant=' . urlencode($tenantSlug);
-            $body = "Olá,\n\nRecebemos uma solicitação para redefinir sua senha no Clinix.\n\nAcesse o link (válido por 1 hora):\n{$link}\n\nSe não foi você, ignore este e-mail.";
-            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Mailer::send($email, 'Redefinição de senha - Clinix', $body);
-            }
-            if (APP_ENV !== 'production') {
-                @file_put_contents(
-                    dirname(__DIR__, 2) . '/storage/logs/password-reset.log',
-                    date('c') . " user={$username} link={$link}\n",
-                    FILE_APPEND
-                );
+            $email = trim((string) ($_POST['email'] ?? ''));
+            $storedEmail = trim((string) ($user['email'] ?? ''));
+            $canSend = $email !== ''
+                && filter_var($email, FILTER_VALIDATE_EMAIL)
+                && ($storedEmail === '' || strcasecmp($storedEmail, $email) === 0);
+
+            if ($canSend || APP_ENV !== 'production') {
+                $token = (new PasswordReset())->createToken((int) $user['id'], (int) $tenant['id']);
+                $link = APP_URL . '/?route=password.reset&token=' . urlencode($token) . '&tenant=' . urlencode($tenantSlug);
+                if ($canSend) {
+                    $body = "Olá,\n\nRecebemos uma solicitação para redefinir sua senha no Clinix.\n\nAcesse o link (válido por 1 hora):\n{$link}\n\nSe não foi você, ignore este e-mail.";
+                    Mailer::send($email, 'Redefinição de senha - Clinix', $body);
+                }
+                if (APP_ENV !== 'production') {
+                    @file_put_contents(
+                        dirname(__DIR__, 2) . '/storage/logs/password-reset.log',
+                        date('c') . " user={$username} link={$link}\n",
+                        FILE_APPEND
+                    );
+                }
             }
         }
 

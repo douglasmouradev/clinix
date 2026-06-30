@@ -76,7 +76,7 @@ final class Notification
         }
 
         if ($channel === 'whatsapp') {
-            return true;
+            return false;
         }
 
         return $channel === 'log';

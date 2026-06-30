@@ -16,7 +16,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=8">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=9">
     <?php if (str_starts_with((string) $currentRoute, 'queue')): ?>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue.css?v=1">
     <?php endif; ?>
@@ -44,7 +44,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
             <a class="<?= $currentRoute === 'dashboard' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=dashboard">Inicio</a>
             <?php if (($user['role'] ?? '') === 'admin'): ?>
                 <a class="<?= str_starts_with($currentRoute, 'admin.') ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=admin.users">Administração</a>
-                <a class="<?= $currentRoute === 'billing' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=billing">Billing</a>
+                <a class="<?= $currentRoute === 'billing' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=billing">Assinatura</a>
                 <a class="<?= $currentRoute === 'reports.executive' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=reports.executive">Relatórios</a>
                 <a class="<?= $currentRoute === 'compliance' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=compliance">Compliance</a>
                 <a class="<?= $currentRoute === 'admin.audit' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=admin.audit">Auditoria</a>
@@ -78,7 +78,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
                 <a class="side-link <?= $currentRoute === 'admin.clinic' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=admin.clinic">Slug da clínica</a>
                 <a class="side-link <?= $currentRoute === 'admin.panel' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=admin.panel">Token do painel</a>
                 <a class="side-link <?= $currentRoute === 'admin.api' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=admin.api">API</a>
-                <a class="side-link <?= $currentRoute === 'billing' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=billing">Billing</a>
+                <a class="side-link <?= $currentRoute === 'billing' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=billing">Assinatura</a>
                 <a class="side-link <?= $currentRoute === 'reports.executive' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=reports.executive">Relatórios</a>
                 <a class="side-link <?= $currentRoute === 'compliance' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=compliance">Compliance</a>
                 <a class="side-link <?= $currentRoute === 'admin.audit' ? 'active' : '' ?>" href="<?= APP_URL ?>/?route=admin.audit">Auditoria</a>

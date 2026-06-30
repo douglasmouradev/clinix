@@ -14,6 +14,7 @@ CREATE TABLE users (
     tenant_id BIGINT UNSIGNED NOT NULL,
     name VARCHAR(120) NOT NULL,
     username VARCHAR(50) NOT NULL,
+    email VARCHAR(180) DEFAULT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'reception', 'nurse', 'doctor') NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,

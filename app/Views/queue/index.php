@@ -21,13 +21,12 @@
             <h3>Gerar senha de atendimento</h3>
             <form class="queue-ajax-form" method="post" action="<?= APP_URL ?>/?route=queue.generate" data-queue-action="generate">
                 <?= csrfInput() ?>
-                <label>Paciente</label>
-                <select name="patient_id" required>
-                    <option value="">Selecione</option>
-                    <?php foreach ($patients as $patient): ?>
-                        <option value="<?= (int) $patient['id'] ?>"><?= e($patient['full_name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <?php
+                $selectedPatientId = 0;
+                $selectedPatientName = '';
+                $inputId = 'queue-patient-picker';
+                include __DIR__ . '/../partials/patient_picker.php';
+                ?>
                 <label class="queue-field-label">Sala prevista</label>
                 <input name="room" placeholder="Ex.: Triagem 1 ou Consultorio 2">
                 <div class="queue-print-option">
@@ -146,4 +145,5 @@
         defaultRoom: <?= json_encode(queueDefaultCallRoom($role), JSON_UNESCAPED_UNICODE) ?>
     };
 </script>
-<script src="<?= APP_URL ?>/js/queue-manage.js?v=6"></script>
+<script src="<?= APP_URL ?>/js/queue-manage.js?v=7"></script>
+<script src="<?= APP_URL ?>/js/patient-picker.js?v=1"></script>

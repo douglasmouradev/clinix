@@ -20,12 +20,13 @@ final class ApiToken
     public function create(string $name): string
     {
         $plain = bin2hex(random_bytes(24));
-        $sql = 'INSERT INTO api_tokens (tenant_id, name, token_hash, is_active) VALUES (:tenant_id, :name, :hash, 1)';
+        $sql = 'INSERT INTO api_tokens (tenant_id, name, token_hash, scopes, is_active) VALUES (:tenant_id, :name, :hash, :scopes, 1)';
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute([
             'tenant_id' => tenantId(),
             'name' => $name,
             'hash' => hash('sha256', $plain),
+            'scopes' => 'patients,queue,appointments,returns',
         ]);
 
         return $plain;

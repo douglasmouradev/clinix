@@ -62,6 +62,7 @@ final class Router
             'admin.2fa.enable' => ['class' => \App\Controllers\TwoFactorController::class, 'method' => 'enable', 'http' => ['POST'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
             'admin.2fa.disable' => ['class' => \App\Controllers\TwoFactorController::class, 'method' => 'disable', 'http' => ['POST'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
             'patients' => ['class' => \App\Controllers\PatientController::class, 'method' => 'index', 'http' => ['GET'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
+            'patient.search' => ['class' => \App\Controllers\PatientController::class, 'method' => 'search', 'http' => ['GET'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
             'patient.form' => ['class' => \App\Controllers\PatientController::class, 'method' => 'form', 'http' => ['GET'], 'roles' => ['admin', 'reception']],
             'patient.save' => ['class' => \App\Controllers\PatientController::class, 'method' => 'save', 'http' => ['POST'], 'roles' => ['admin', 'reception']],
             'patient.document' => ['class' => \App\Controllers\DocumentController::class, 'method' => 'patient', 'http' => ['GET'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
@@ -96,6 +97,12 @@ final class Router
             'cron.retention' => ['class' => \App\Controllers\CronController::class, 'method' => 'retention', 'http' => ['GET', 'POST'], 'public' => true],
             'api.v1.patients' => ['class' => \App\Controllers\ApiController::class, 'method' => 'patients', 'http' => ['GET'], 'public' => true],
             'api.v1.queue' => ['class' => \App\Controllers\ApiController::class, 'method' => 'queue', 'http' => ['GET'], 'public' => true],
+            'api.v1.appointments' => ['class' => \App\Controllers\ApiController::class, 'method' => 'appointments', 'http' => ['GET'], 'public' => true],
+            'api.v1.returns' => ['class' => \App\Controllers\ApiController::class, 'method' => 'returns', 'http' => ['GET'], 'public' => true],
+            'portal' => ['class' => \App\Controllers\PortalController::class, 'method' => 'loginForm', 'http' => ['GET'], 'public' => true],
+            'portal.login' => ['class' => \App\Controllers\PortalController::class, 'method' => 'login', 'http' => ['POST'], 'public' => true],
+            'portal.home' => ['class' => \App\Controllers\PortalController::class, 'method' => 'home', 'http' => ['GET'], 'public' => true],
+            'portal.logout' => ['class' => \App\Controllers\PortalController::class, 'method' => 'logout', 'http' => ['POST'], 'public' => true],
         ];
     }
 

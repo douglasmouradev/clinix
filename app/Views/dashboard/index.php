@@ -33,6 +33,7 @@ $stats = $stats ?? [];
             <a class="btn small" href="<?= APP_URL ?>/?route=patients">Pacientes</a>
             <a class="btn secondary small" href="<?= APP_URL ?>/?route=appointments">Agenda</a>
             <a class="btn secondary small" href="<?= APP_URL ?>/?route=returns">Retornos</a>
+            <a class="btn secondary small" href="<?= APP_URL ?>/?route=portal">Portal paciente</a>
             <a class="btn secondary small" href="<?= APP_URL ?>/?route=queue">Fila</a>
             <a class="btn secondary small" href="<?= APP_URL ?>/?route=queue.panel">Painel TV</a>
         </div>

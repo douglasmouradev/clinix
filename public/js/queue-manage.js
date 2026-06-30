@@ -184,9 +184,17 @@
         if (!data || !data.ok) {
             return;
         }
+        if (data.unchanged) {
+            lastSyncAt = Date.now();
+            updateSyncLabel();
+            return;
+        }
         renderRows(data.queue || []);
         lastSyncAt = Date.now();
         updateSyncLabel();
+        if (data.revision) {
+            config.revision = data.revision;
+        }
     }
 
     function pollQueue() {
@@ -194,7 +202,11 @@
             return;
         }
         polling = true;
-        fetch(config.dataUrl, {
+        var url = config.dataUrl;
+        if (config.revision) {
+            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'revision=' + encodeURIComponent(config.revision);
+        }
+        fetch(url, {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             cache: 'no-store',
         })
