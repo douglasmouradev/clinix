@@ -208,8 +208,14 @@ body.is-portal .portal-main.portal-main--wide {
     margin: 0 auto;
     align-items: stretch;
 }
-.portal-login-brand { text-align: center; margin-bottom: 14px; }
-.portal-login-logo { display: block; width: 180px; max-width: 100%; height: auto; object-fit: contain; }
+.portal-login-brand { text-align: center; margin-bottom: 16px; line-height: 0; }
+.portal-login-logo {
+    display: block;
+    width: min(220px, 100%);
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+}
 .portal-login-footer { margin-top: 12px; text-align: center; }
 .login-hero {
     background: linear-gradient(140deg, #244b5a, #316a7d 65%, #82a9b8);

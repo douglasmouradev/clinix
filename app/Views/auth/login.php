@@ -3,13 +3,13 @@
         <section class="login-hero">
             <div class="login-hero-logo-wrap">
                 <img
-                    src="<?= APP_URL ?>/img/clinix-logo.png"
-                    srcset="<?= APP_URL ?>/img/clinix-logo.png 369w, <?= APP_URL ?>/img/clinix-logo@2x.png 738w"
+                    src="<?= APP_URL ?>/img/clinix-logo-transparent.png"
+                    srcset="<?= APP_URL ?>/img/clinix-logo-transparent.png 1x, <?= APP_URL ?>/img/clinix-logo@2x.png 2x"
                     sizes="220px"
                     alt="Clinix"
                     class="login-hero-logo"
-                    width="369"
-                    height="257"
+                    width="276"
+                    height="108"
                     decoding="async"
                 >
             </div>

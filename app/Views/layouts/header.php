@@ -16,7 +16,7 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= APP_URL ?>/css/tokens.css">
-    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=10">
+    <link rel="stylesheet" href="<?= APP_URL ?>/css/app.css?v=11">
     <?php if (str_starts_with((string) $currentRoute, 'queue')): ?>
     <link rel="stylesheet" href="<?= APP_URL ?>/css/queue.css?v=1">
     <?php endif; ?>
@@ -29,13 +29,13 @@ $currentRoute = $_GET['route'] ?? 'dashboard';
     <a class="brand" href="<?= APP_URL ?>/?route=dashboard">
         <span class="brand-logo-wrap">
             <img
-                src="<?= APP_URL ?>/img/clinix-logo.png"
-                srcset="<?= APP_URL ?>/img/clinix-logo.png 369w, <?= APP_URL ?>/img/clinix-logo@2x.png 738w"
+                src="<?= APP_URL ?>/img/clinix-logo-transparent.png"
+                srcset="<?= APP_URL ?>/img/clinix-logo-transparent.png 1x, <?= APP_URL ?>/img/clinix-logo@2x.png 2x"
                 sizes="120px"
                 alt="Clinix"
                 class="brand-logo"
-                width="369"
-                height="257"
+                width="276"
+                height="108"
                 decoding="async"
             >
         </span>
