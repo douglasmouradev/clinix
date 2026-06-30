@@ -4,12 +4,15 @@
         return;
     }
 
+    var root = document.querySelector('.address-block');
+    var appUrl = (root && root.getAttribute('data-app-url')) || '';
     var street = document.getElementById('address-street');
     var neighborhood = document.getElementById('address-neighborhood');
     var city = document.getElementById('address-city');
     var state = document.getElementById('address-state');
     var status = document.getElementById('cep-status');
     var loading = false;
+    var lastLookup = '';
 
     function onlyDigits(value) {
         return String(value || '').replace(/\D/g, '').slice(0, 8);
@@ -43,7 +46,7 @@
         if (state && data.uf) {
             state.value = data.uf;
         }
-        if (street && data.complemento && street.value.indexOf(data.complemento) === -1) {
+        if (data.complemento) {
             var complement = document.getElementById('address-complement');
             if (complement && !complement.value) {
                 complement.value = data.complemento;
@@ -52,23 +55,26 @@
     }
 
     function lookupCep(digits) {
-        if (digits.length !== 8 || loading) {
+        if (digits.length !== 8 || loading || digits === lastLookup) {
             return;
         }
         loading = true;
         setStatus('Buscando endereço...', 'loading');
 
-        fetch('https://viacep.com.br/ws/' + digits + '/json/', {
+        fetch(appUrl + '/?route=cep.lookup&cep=' + encodeURIComponent(digits), {
             headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
         })
             .then(function (response) {
-                return response.json();
+                return response.json().then(function (payload) {
+                    if (!response.ok || !payload.ok) {
+                        throw new Error(payload.error || 'lookup_failed');
+                    }
+                    return payload.data;
+                });
             })
             .then(function (data) {
-                if (!data || data.erro) {
-                    setStatus('CEP não encontrado.', 'error');
-                    return;
-                }
+                lastLookup = digits;
                 fillAddress(data);
                 setStatus('Endereço preenchido automaticamente.', 'success');
                 var number = document.getElementById('address-number');
@@ -76,8 +82,11 @@
                     number.focus();
                 }
             })
-            .catch(function () {
-                setStatus('Não foi possível consultar o CEP. Preencha manualmente.', 'error');
+            .catch(function (error) {
+                var message = error && error.message === 'CEP não encontrado.'
+                    ? 'CEP não encontrado.'
+                    : 'Não foi possível consultar o CEP. Preencha manualmente.';
+                setStatus(message, 'error');
             })
             .finally(function () {
                 loading = false;
@@ -87,7 +96,9 @@
     cepInput.addEventListener('input', function () {
         var digits = onlyDigits(cepInput.value);
         cepInput.value = formatCep(digits);
-        setStatus('', '');
+        if (digits !== lastLookup) {
+            setStatus('', '');
+        }
         if (digits.length === 8) {
             lookupCep(digits);
         }

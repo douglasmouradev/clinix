@@ -234,6 +234,46 @@ function formatCep(?string $cep): string
     return substr($digits, 0, 5) . '-' . substr($digits, 5);
 }
 
+/** @return array{logradouro: string, bairro: string, localidade: string, uf: string, complemento: string}|null */
+function lookupCepFromViaCep(string $cep): ?array
+{
+    $digits = preg_replace('/\D+/', '', $cep) ?? '';
+    if (strlen($digits) !== 8) {
+        return null;
+    }
+
+    $url = 'https://viacep.com.br/ws/' . $digits . '/json/';
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 5,
+            'header' => "Accept: application/json\r\nUser-Agent: Clinix/1.0\r\n",
+        ],
+        'ssl' => [
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+        ],
+    ]);
+
+    $raw = @file_get_contents($url, false, $context);
+    if ($raw === false) {
+        return null;
+    }
+
+    $data = json_decode($raw, true);
+    if (!is_array($data) || !empty($data['erro'])) {
+        return null;
+    }
+
+    return [
+        'logradouro' => (string) ($data['logradouro'] ?? ''),
+        'bairro' => (string) ($data['bairro'] ?? ''),
+        'localidade' => (string) ($data['localidade'] ?? ''),
+        'uf' => (string) ($data['uf'] ?? ''),
+        'complemento' => (string) ($data['complemento'] ?? ''),
+    ];
+}
+
 /** @return array{cep: ?string, address: ?string} */
 function buildPatientAddressFromRequest(array $input): array
 {

@@ -41,7 +41,7 @@
             </div>
         </div>
 
-        <div class="address-block" style="margin-top:10px;">
+        <div class="address-block" data-app-url="<?= e(APP_URL) ?>" style="margin-top:10px;">
             <h3 class="address-block-title">Endereço</h3>
             <div class="grid grid-2">
                 <div>
@@ -83,7 +83,7 @@
                 </div>
             </div>
         </div>
-        <script src="<?= APP_URL ?>/js/cep-autofill.js?v=1"></script>
+        <script src="<?= APP_URL ?>/js/cep-autofill.js?v=3"></script>
 
         <div style="margin-top:10px;">
             <label>Histórico médico basico</label>

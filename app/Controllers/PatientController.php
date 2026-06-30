@@ -40,6 +40,23 @@ final class PatientController
         jsonResponse(['ok' => true, 'data' => $data]);
     }
 
+    public function cepLookup(): void
+    {
+        Auth::requireRole(['admin', 'reception']);
+
+        $cep = preg_replace('/\D+/', '', (string) ($_GET['cep'] ?? '')) ?? '';
+        if (strlen($cep) !== 8) {
+            jsonResponse(['ok' => false, 'error' => 'CEP inválido.'], 400);
+        }
+
+        $data = lookupCepFromViaCep($cep);
+        if ($data === null) {
+            jsonResponse(['ok' => false, 'error' => 'CEP não encontrado.'], 404);
+        }
+
+        jsonResponse(['ok' => true, 'data' => $data]);
+    }
+
     public function form(): void
     {
         Auth::requireRole(['admin', 'reception']);

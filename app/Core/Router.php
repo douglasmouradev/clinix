@@ -63,6 +63,7 @@ final class Router
             'admin.2fa.disable' => ['class' => \App\Controllers\TwoFactorController::class, 'method' => 'disable', 'http' => ['POST'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
             'patients' => ['class' => \App\Controllers\PatientController::class, 'method' => 'index', 'http' => ['GET'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
             'patient.search' => ['class' => \App\Controllers\PatientController::class, 'method' => 'search', 'http' => ['GET'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
+            'cep.lookup' => ['class' => \App\Controllers\PatientController::class, 'method' => 'cepLookup', 'http' => ['GET'], 'roles' => ['admin', 'reception']],
             'patient.form' => ['class' => \App\Controllers\PatientController::class, 'method' => 'form', 'http' => ['GET'], 'roles' => ['admin', 'reception']],
             'patient.save' => ['class' => \App\Controllers\PatientController::class, 'method' => 'save', 'http' => ['POST'], 'roles' => ['admin', 'reception']],
             'patient.document' => ['class' => \App\Controllers\DocumentController::class, 'method' => 'patient', 'http' => ['GET'], 'roles' => ['admin', 'reception', 'nurse', 'doctor']],
